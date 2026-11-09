@@ -1,7 +1,7 @@
 /* ==========================================================================
    STYLE.CSS - Aplikasi Pertanggung Jawaban Perjalanan Dinas
    Satker PJN Wilayah III Provinsi Sulawesi Selatan
-   Pengaturan Kertas: A4S (210mm x 297mm Portrait), Margin: 1.5cm, Font: Arial
+   Pengaturan Kertas: A4S (215mm x 297mm Portrait), Margin: 1.5cm, Font: Arial
    ========================================================================== */
 
 :root {
@@ -24,15 +24,15 @@ body {
 }
 
 /* ==========================================================================
-   PENGATURAN KERTAS A4S (210mm x 297mm) DENGAN MARGIN 1.5 CM & FONT ARIAL
+   PENGATURAN KERTAS A4S (215mm x 297mm) DENGAN MARGIN 1.5 CM & FONT ARIAL
    ========================================================================== */
 @page {
   size: A4 portrait;
-  margin: 1.5cm;
+  margin: 1.4cm;
 }
 
 .a4-page {
-  width: 210mm;
+  width: 215mm;
   min-height: 297mm;
   padding: 1.5cm;
   margin: 0 auto 28px auto;
@@ -940,9 +940,9 @@ h3 {
 
 .kertas-a4 { 
     background: white; 
-    width: 210mm; 
+    width: 215mm; 
     /* Simulasi Tampilan Layar: Atas 1.5, Kanan 1.5, Bawah 1.2, Kiri 1.5 */
-    padding: 1.5cm 1.5cm 1.2cm 1.5cm; 
+    padding: 1.4cm 1.5cm 1.2cm 1.5cm; 
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); 
     border-radius: 2px;
     font-family: 'Arial', sans-serif; 
