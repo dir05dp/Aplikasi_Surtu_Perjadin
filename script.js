@@ -6,7 +6,7 @@
 const firebaseConfig = {
     apiKey: "AIzaSyCe3rPcr16z_fn8PI26PmVTtcVLn_UR6nI",
     authDomain: "surat-tugas-pjn3.firebaseapp.com",
-    databaseURL: "https://surat-tugas-pjn3-default-rtdb.asia-southeast1.firebasedatabase.app",
+    databaseURL: "https://aplikasi-perjadin-default-rtdb.asia-southeast1.firebasedatabase.app/",
     projectId: "surat-tugas-pjn3",
     storageBucket: "surat-tugas-pjn3.firebasestorage.app",
     messagingSenderId: "102517467930",
