@@ -4,7 +4,7 @@
 // Digunakan bersama oleh Modul Surat Tugas & Modul SPJ Perjalanan Dinas
 // ============================================================================
 
-const FIREBASE_DATABASE_URL = "https://aplikasi-perjadin-default-rtdb.asia-southeast1.firebasedatabase.app/";
+const FIREBASE_DATABASE_URL = "https://surat-tugas-pjn3-default-rtdb.asia-southeast1.firebasedatabase.app/";
 const SURAT_TUGAS_FIREBASE_URL = "https://surat-tugas-pjn3-default-rtdb.asia-southeast1.firebasedatabase.app";
 
 const DEFAULT_DATABASE_PEGAWAI = [
@@ -870,7 +870,7 @@ const DEFAULT_PEJABAT_REF = [
   {
     "peran": "An. Kepala Satuan Kerja",
     "sub_jabatan": "Asisten Keuangan, Umum & Pelaporan",
-    "nama": "Haerana, ST",
-    "nip": "NIP 197305132009112001"
+    "nama": "Suarni Awing, ST, MT",
+    "nip": "NIP 197701152009112001"
   }
 ];
