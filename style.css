@@ -1,0 +1,1072 @@
+/* ==========================================================================
+   STYLE.CSS - Aplikasi Pertanggung Jawaban Perjalanan Dinas
+   Satker PJN Wilayah III Provinsi Sulawesi Selatan
+   Pengaturan Kertas: A4S (210mm x 297mm Portrait), Margin: 1.5cm, Font: Arial
+   ========================================================================== */
+
+:root {
+  --pu-navy: #162a5c;
+  --pu-gold: #eab308;
+  --bg-workspace: #f1f5f9;
+  --border-doc: #000000;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-workspace);
+  font-family: 'Inter', Arial, sans-serif;
+  color: #1e293b;
+}
+
+/* ==========================================================================
+   PENGATURAN KERTAS A4S (210mm x 297mm) DENGAN MARGIN 1.5 CM & FONT ARIAL
+   ========================================================================== */
+@page {
+  size: A4 portrait;
+  margin: 1.5cm;
+}
+
+.a4-page {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 1.5cm;
+  margin: 0 auto 28px auto;
+  background: #ffffff;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+  border: 1px solid #cbd5e1;
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: var(--doc-font-size, 10pt);
+  line-height: 1.3;
+  color: #000000;
+  position: relative;
+}
+
+.a4-page * {
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
+/* Kop Surat Image */
+.kop-surat-wrap {
+  width: 100%;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.kop-surat-img {
+  width: 100%;
+  max-height: 3.1cm;
+  object-fit: contain;
+  display: block;
+}
+
+/* Document Tables */
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: var(--doc-font-size, 10pt);
+  color: #000000;
+}
+
+.doc-table th,
+.doc-table td {
+  padding: 3px 6px;
+  vertical-align: top;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.doc-table-bordered th,
+.doc-table-bordered td {
+  border: 1px solid #000000;
+}
+
+/* Sheet 1 (SPD_Hal Depan) Middle Vertical Alignment */
+#page-spd .doc-table-bordered th,
+#page-spd .doc-table-bordered td {
+  vertical-align: middle !important;
+}
+
+.doc-box-frame {
+  border: 1.5px solid #000000;
+  padding: 10px 12px;
+}
+
+/* Form Controls inside A4 Document */
+.doc-input,
+.doc-select,
+.doc-textarea {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: var(--doc-font-size, 10pt);
+  color: #000000;
+  background-color: rgba(254, 249, 195, 0.45);
+  border: 1px dashed #94a3b8;
+  border-radius: 3px;
+  padding: 2px 5px;
+  width: 100%;
+  transition: all 0.15s ease;
+}
+
+.doc-input:focus,
+.doc-select:focus,
+.doc-textarea:focus {
+  outline: none;
+  background-color: #fef08a;
+  border: 1px solid #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.doc-input:disabled,
+.doc-select:disabled,
+.doc-textarea:disabled {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: #000000 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #000000 !important;
+  cursor: not-allowed;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.doc-input-inline {
+  display: inline-block;
+  width: auto;
+  min-width: 60px;
+}
+
+.doc-input-num {
+  text-align: right;
+  font-weight: 600;
+}
+
+/* Accounting alignment for JUMLAH & SPD Rampung on Sheet 2 */
+.accounting-val {
+  display: block;
+  width: 100%;
+  text-align: right !important;
+  font-weight: 600;
+  padding: 2px 4px !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.accounting-val:disabled {
+  padding-right: 4px !important;
+}
+
+/* Interactive Date Picker Wrapper with Indonesian Formatted Display */
+.date-picker-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+}
+
+.date-picker-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 2px 6px;
+  border: 1px dashed #94a3b8;
+  border-radius: 3px;
+  background-color: rgba(254, 249, 195, 0.45);
+  color: #000000;
+  cursor: pointer;
+  user-select: none;
+}
+
+.date-picker-icon {
+  font-size: 9pt;
+  opacity: 0.7;
+  margin-left: 4px;
+}
+
+.date-picker-native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 5;
+}
+
+.date-picker-native:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+body.locked-mode .date-picker-display {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  cursor: not-allowed;
+}
+
+body.locked-mode .date-picker-icon {
+  display: none !important;
+}
+
+/* Auto-wrapping textareas with justify support */
+.doc-textarea {
+  resize: none;
+  overflow: hidden;
+  min-height: 22px;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  display: block;
+}
+
+.doc-justify {
+  text-align: justify !important;
+  text-justify: inter-word;
+}
+
+/* Linked Read-only Formula Field */
+.linked-field {
+  background-color: rgba(219, 234, 254, 0.4);
+  border-bottom: 1px dotted #64748b;
+  padding: 1px 3px;
+  border-radius: 2px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+body.locked-mode .linked-field {
+  background-color: transparent;
+  border-bottom-color: transparent;
+}
+
+/* Tab Navigation */
+.sheet-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.sheet-tab:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.sheet-tab.active {
+  background: #ffffff;
+  color: var(--pu-navy);
+  border-top: 3px solid var(--pu-gold);
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.04);
+}
+
+/* Responsive Scaling on smaller screens */
+@media screen and (max-width: 860px) {
+  .a4-workspace-scroll {
+    overflow-x: auto;
+    padding: 8px;
+  }
+}
+
+/* ==========================================================================
+   PRINT MEDIA RULES (A4S Portrait, 1.5cm Margin, Arial, Clean Borders)
+   ========================================================================== */
+@media print {
+  html, body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .a4-workspace-scroll {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  .a4-page {
+    width: 100% !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .doc-input,
+  .doc-select,
+  .doc-textarea,
+  .date-picker-display {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+  }
+
+  .date-picker-icon,
+  .date-picker-native {
+    display: none !important;
+  }
+
+  .accounting-val {
+    padding-right: 4px !important;
+  }
+
+  .linked-field {
+    background-color: transparent !important;
+    border: none !important;
+  }
+
+  body.print-single-mode .sheet-section:not(.active-print-target) {
+    display: none !important;
+  }
+
+  body.print-single-mode .sheet-section.active-print-target {
+    display: block !important;
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  body.print-all-mode .sheet-section.printable-sheet {
+    display: block !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  body.print-all-mode #sheet-spby.sheet-section.printable-sheet {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  body.print-all-mode #sheet-database {
+    display: none !important;
+  }
+}
+
+/* Pastikan teks dokumen selalu bisa diblok untuk Copy-Paste (Ctrl+C / Ctrl+V) */
+.a4-page,
+.a4-page *,
+.doc-input,
+.doc-textarea,
+.linked-field {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+}
+
+/* ==========================================================================
+   BOTTOM STATUS BAR: PENGATURAN BESAR HURUF & ZOOM LEMBAR KERJA
+   ========================================================================== */
+:root {
+  --doc-font-size: 10pt;
+  --doc-zoom: 1;
+}
+
+.a4-workspace-scroll {
+  padding-bottom: 72px;
+}
+
+.a4-page {
+  zoom: var(--doc-zoom, 1);
+}
+
+.bottom-settings-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(8px);
+  border-top: 2px solid #eab308;
+  color: #f8fafc;
+  padding: 8px 16px;
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.15);
+}
+
+@media print {
+  .bottom-settings-bar {
+    display: none !important;
+  }
+  .a4-page {
+    zoom: 1 !important;
+  }
+}
+
+/* Sembunyikan teks placeholder "Pilih Pengikut (Opsional)" saat terkunci atau dicetak jika tidak ada yang dipilih */
+body.locked-mode .employee-dropdown-optional.empty-optional-select {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+@media print {
+  .employee-dropdown-optional.empty-optional-select {
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+    visibility: hidden !important;
+  }
+}
+
+
+/* === MODUL SURAT TUGAS STYLES === */
+/* =======================================================
+   1. DESAIN APLIKASI UTAMA (FRESH MODERN UI)
+   ======================================================= */
+:root {
+    --pu-navy: #162a5c;
+    --pu-navy-dark: #0f1e45;
+    --pu-gold: #f59e0b;
+    --pu-gold-soft: #fef3c7;
+    --surface-bg: #ffffff;
+    --sidebar-bg: #f8fafc;
+    --border-soft: #cbd5e1;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+}
+
+#module-surat-tugas.st-module-wrapper {
+    font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #e2e8f0;
+    margin: 0;
+    display: flex;
+    height: calc(100vh - 46px);
+    overflow: hidden;
+    color: var(--text-main);
+}
+
+/* Custom Scrollbar Modern */
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+/* =======================================================
+   2. PANEL INPUT KIRI (SIDEBAR) & TOMBOL
+   ======================================================= */
+.sidebar {
+    width: 440px;
+    min-width: 320px;
+    max-width: 600px;
+    resize: horizontal;
+    background: var(--surface-bg);
+    padding: 18px 18px 28px 18px;
+    overflow-y: auto;
+    box-shadow: 4px 0 24px rgba(15, 23, 42, 0.12);
+    border-right: 1px solid var(--border-soft);
+    z-index: 10;
+}
+
+.creator-badge {
+    display: inline-block;
+    font-size: 10.5px;
+    color: var(--pu-navy);
+    background: #e0e7ff;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.sidebar h2 {
+    font-size: 17px;
+    font-weight: 800;
+    margin-top: 2px;
+    color: var(--pu-navy);
+    border-bottom: 3px solid var(--pu-gold);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    letter-spacing: -0.2px;
+}
+
+.form-group {
+    margin-bottom: 10px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #334155;
+    letter-spacing: 0.1px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="date"],
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font-family: inherit;
+    font-size: 13.5px;
+    color: #0f172a;
+    background-color: #ffffff;
+    box-sizing: border-box;
+    line-height: 1.35;
+    transition: all 0.18s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="date"]:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    background-color: #ffffff;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 40px;
+}
+
+/* Datepicker Styling */
+.datepicker-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.datepicker-field input[type="date"] {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.datepicker-preview-badge {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e3a8a;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.datepicker-preview-badge strong {
+    font-weight: 700;
+    color: #1d4ed8;
+}
+
+
+/* Periode Perjalanan Dinas Dual Datepicker */
+.periode-datepicker-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.periode-col {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.periode-sub-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.periode-col input[type="date"] {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 12.5px;
+    padding: 6px 8px;
+}
+
+hr {
+    margin: 14px 0;
+    border: 0;
+    border-top: 1px solid #e2e8f0;
+}
+
+h3 {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--pu-navy);
+    margin: 12px 0 4px 0;
+}
+
+.helper-note {
+    font-size: 11px;
+    color: #2563eb;
+    font-style: italic;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.panel-untuk {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-left: 4px solid var(--pu-navy);
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.panel-untuk h4 {
+    margin: 0 0 10px 0;
+    font-size: 13.5px;
+    font-weight: 800;
+    color: var(--pu-navy);
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.pegawai-item {
+    background: #ffffff;
+    padding: 10px 12px;
+    margin-bottom: 9px;
+    border: 1px solid #cbd5e1;
+    border-left: 4px solid var(--pu-gold);
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.04);
+    transition: border-color 0.15s ease;
+}
+
+.pegawai-item:hover {
+    border-color: #94a3b8;
+}
+
+.remove-btn {
+    color: #dc2626;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 5px;
+    padding: 2px 8px;
+    cursor: pointer;
+    font-size: 11px;
+    float: right;
+    font-weight: 700;
+    text-decoration: none;
+    margin-top: -1px;
+    transition: all 0.15s ease;
+}
+
+.remove-btn:hover {
+    background: #dc2626;
+    color: #ffffff;
+}
+
+/* Tombol Aksi Modern */
+.btn {
+    color: white;
+    border: none;
+    padding: 9px 14px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 12.5px;
+    width: 100%;
+    margin-bottom: 7px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    transition: all 0.18s ease;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.1);
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+.btn-lock-state {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    margin-bottom: 12px;
+    font-size: 12.5px;
+}
+
+.btn-print {
+    background: linear-gradient(135deg, #162a5c 0%, #1e40af 100%);
+}
+.btn-print:hover {
+    background: linear-gradient(135deg, #0f1e45 0%, #1d4ed8 100%);
+}
+
+.btn-save {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+}
+.btn-save:hover {
+    background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+}
+
+.btn-history {
+    background: linear-gradient(135deg, #475569 0%, #334155 100%);
+    margin-bottom: 12px;
+}
+.btn-history:hover {
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+}
+
+.btn-add {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    margin-top: 6px;
+}
+.btn-add:hover {
+    background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+}
+
+.btn-small {
+    padding: 6px 11px;
+    font-size: 11.5px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: white;
+    margin-left: 5px;
+    font-weight: 700;
+    transition: all 0.15s ease;
+}
+
+.btn-load {
+    background: #16a34a;
+}
+.btn-load:hover {
+    background: #15803d;
+}
+
+.btn-del {
+    background: #dc2626;
+}
+.btn-del:hover {
+    background: #b91c1c;
+}
+
+/* Modal Riwayat Cloud */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background-color: #ffffff;
+    margin: 5% auto;
+    padding: 22px 24px;
+    border-radius: 12px;
+    width: 85%;
+    max-width: 540px;
+    box-shadow: 0 20px 35px -5px rgba(15, 23, 42, 0.35);
+    border: 1px solid #e2e8f0;
+    position: relative;
+}
+
+.close-btn {
+    position: absolute;
+    right: 20px;
+    top: 16px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #94a3b8;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.15s ease;
+}
+
+.close-btn:hover {
+    color: #dc2626;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    font-size: 16.5px;
+    font-weight: 800;
+    color: var(--pu-navy);
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 12px;
+}
+
+.list-item {
+    background: #f8fafc;
+    padding: 11px 13px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.15s ease;
+}
+
+.list-item:hover {
+    background: #ffffff;
+    border-color: #60a5fa;
+    box-shadow: 0 3px 8px rgba(37, 99, 235, 0.08);
+}
+
+.list-item-info {
+    flex-grow: 1;
+}
+
+.list-item-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 3px;
+}
+
+.list-item-sub {
+    font-size: 11.5px;
+    color: #64748b;
+}
+
+.cloud-note-box {
+    font-size: 11px;
+    color: #334155;
+    font-style: italic;
+    background-color: #f0f9ff;
+    padding: 10px 12px;
+    border-radius: 7px;
+    border-left: 4px solid #0284c7;
+    line-height: 1.45;
+}
+
+
+/* Custom In-Page Dialog Styling */
+.ui-dialog-box {
+    max-width: 410px;
+    margin: 10% auto;
+}
+.ui-dialog-msg {
+    font-size: 13.5px;
+    color: #334155;
+    line-height: 1.5;
+    margin: 10px 0 16px 0;
+}
+.ui-dialog-input {
+    width: 100%;
+    padding: 8px 11px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font-size: 13.5px;
+    box-sizing: border-box;
+}
+.ui-dialog-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.ui-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.btn-cancel-dialog {
+    background: #e2e8f0;
+    color: #1e293b;
+    padding: 7px 14px;
+}
+.btn-cancel-dialog:hover {
+    background: #cbd5e1;
+}
+.btn-ok-dialog {
+    background: var(--pu-navy);
+    color: #ffffff;
+    padding: 7px 18px;
+}
+.btn-ok-dialog:hover {
+    background: var(--pu-navy-dark);
+}
+
+/* =======================================================
+   3. PRATINJAU KERTAS SURAT (DENGAN PADDING PRESISI)
+   ======================================================= */
+.preview-container {
+    flex-grow: 1;
+    padding: 28px 24px;
+    overflow-y: auto;
+    background: radial-gradient(circle at top, #475569 0%, #334155 100%);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.kertas-a4 { 
+    background: white; 
+    width: 210mm; 
+    /* Simulasi Tampilan Layar: Atas 1.5, Kanan 1.5, Bawah 1.2, Kiri 1.5 */
+    padding: 1.5cm 1.5cm 1.2cm 1.5cm; 
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); 
+    border-radius: 2px;
+    font-family: 'Arial', sans-serif; 
+    font-size: 11pt; 
+    color: #000; 
+    box-sizing: border-box; 
+    position: relative; 
+    display: block; 
+}
+
+.konten-utama { display: block; }
+.kop-surat-container { margin-bottom: 20px; text-align: center; }
+.kop-surat-img { width: 100%; height: auto; display: block; }
+.judul-surat { text-align: center; margin-bottom: 15px; }
+.judul-surat h1 { font-size: 14pt; margin: 0; text-decoration: underline; font-weight: normal; }
+.judul-surat p { margin: 2px 0 0 0; }
+table.isi-surat { width: 100%; border-collapse: collapse; }
+table.isi-surat td { padding: 2px 5px; vertical-align: top; }
+.col-label { width: 15%; }
+.col-titikdua { width: 2%; text-align: center; }
+.col-konten { width: 83%; }
+.memberi-tugas { text-align: center; margin: 10px 0; font-weight: normal; }
+.ttd-section { width: 300px; float: right; text-align: center; margin-top: 30px; page-break-inside: avoid; }
+.ttd-section p { margin: 2px 0; line-height: 1.15; }
+.ttd-nama { margin-top: 70px; }
+
+/* =======================================================
+   4. LOGO KAN (TIDAK LAGI MENGGUNAKAN ABSOLUTE)
+   ======================================================= */
+.footer-kan {
+    width: 100%;
+    text-align: center;
+    page-break-inside: avoid;
+}
+.footer-kan img { height: 1cm; width: auto; display: inline-block; }
+
+/* =======================================================
+   5. MODE CETAK (PRINT)
+   ======================================================= */
+
+
+/* ==========================================================================
+   PORTAL MODE SWITCHER & SCOPED PRINT RULES (SURAT TUGAS vs SPJ)
+   ========================================================================== */
+.portal-mode-bar {
+  background: linear-gradient(90deg, #0b1736 0%, #162a5c 60%, #1e3a8a 100%);
+  border-bottom: 2px solid #f59e0b;
+  color: #ffffff;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+.portal-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.portal-mode-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.portal-mode-btn.active {
+  background: #f59e0b;
+  color: #0f172a;
+  border-color: #fde68a;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+}
+
+@media print {
+  .portal-mode-bar {
+    display: none !important;
+  }
+
+  /* Jika sedang mencetak dari Modul Surat Tugas */
+  body.active-module-st #module-spj,
+  body.active-module-st .bottom-settings-bar,
+  body.active-module-st .sidebar,
+  body.active-module-st .modal,
+  body.active-module-st #btn-lock {
+    display: none !important;
+  }
+
+  body.active-module-st #module-surat-tugas {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+
+  body.active-module-st .preview-container {
+    padding: 0 !important;
+    background: white !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  body.active-module-st .kertas-a4 {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Jika sedang mencetak dari Modul SPJ Perjalanan Dinas */
+  body.active-module-spj #module-surat-tugas {
+    display: none !important;
+  }
+}
