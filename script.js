@@ -1176,13 +1176,13 @@ let autoSyncFlags = {
 };
 
 // ============================================================================
-// KONFIGURASI  REALTIME DATABASE (DIAMBIL DARI DATABASE.JS)
+// KONFIGURASI REALTIME DATABASE TERPUSAT
+// URL Cloud: https://surat-tugas-pjn3-default-rtdb.asia-southeast1.firebasedatabase.app/
 // ============================================================================
+const CLOUD_FIREBASE_URL = "https://surat-tugas-pjn3-default-rtdb.asia-southeast1.firebasedatabase.app";
+
 function getFirebaseDatabaseUrl() {
-  if (typeof FIREBASE_DATABASE_URL !== "undefined" && FIREBASE_DATABASE_URL) {
-    return String(FIREBASE_DATABASE_URL).trim().replace(/\/+$/, "");
-  }
-  return "";
+  return CLOUD_FIREBASE_URL;
 }
 
 async function syncDatabasePegawaiToCloud() {
@@ -1947,23 +1947,28 @@ async function commitSaveRecord(payload, isOverwrite) {
   saveLocalCloudRecord(recordId, payload);
   cachedCloudRecordsMap[recordId] = payload;
 
-  const baseUrl = getFirebaseDatabaseUrl();
-  if (baseUrl) {
-    try {
-      await Promise.all([
-        fetch(`${baseUrl}/spj_pjn3/records/${encodeURIComponent(recordId)}.json`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        }),
-        fetch(`${baseUrl}/spj_pjn3/databasePegawai.json`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(databasePegawai)
-        })
-      ]);
-    } catch (err) {
-      // ignore network error; local copy already saved
+  try {
+    await Promise.all([
+      set(ref(db, `spj_pjn3/records/${recordId}`), payload),
+      set(ref(db, "spj_pjn3/databasePegawai"), databasePegawai)
+    ]);
+  } catch (err) {
+    const baseUrl = getFirebaseDatabaseUrl();
+    if (baseUrl) {
+      try {
+        await Promise.all([
+          fetch(`${baseUrl}/spj_pjn3/records/${encodeURIComponent(recordId)}.json`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          }),
+          fetch(`${baseUrl}/spj_pjn3/databasePegawai.json`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(databasePegawai)
+          })
+        ]);
+      } catch (e) {}
     }
   }
 
@@ -1997,18 +2002,25 @@ async function saveSpjData() {
   const localRecords = getLocalCloudRecords();
   let isOverwrite = Boolean(localRecords[recordId] || cachedCloudRecordsMap[recordId]);
 
-  const baseUrl = getFirebaseDatabaseUrl();
-  if (baseUrl && !isOverwrite) {
+  if (!isOverwrite) {
     try {
-      const checkRes = await fetch(`${baseUrl}/spj_pjn3/records/${encodeURIComponent(recordId)}.json`);
-      if (checkRes.ok) {
-        const existingData = await checkRes.json();
-        if (existingData && typeof existingData === "object") {
-          isOverwrite = true;
-        }
+      const snap = await get(ref(db, `spj_pjn3/records/${recordId}`));
+      if (snap.exists() && snap.val()) {
+        isOverwrite = true;
       }
     } catch (e) {
-      // ignore check error
+      const baseUrl = getFirebaseDatabaseUrl();
+      if (baseUrl) {
+        try {
+          const checkRes = await fetch(`${baseUrl}/spj_pjn3/records/${encodeURIComponent(recordId)}.json`);
+          if (checkRes.ok) {
+            const existingData = await checkRes.json();
+            if (existingData && typeof existingData === "object") {
+              isOverwrite = true;
+            }
+          }
+        } catch (err) {}
+      }
     }
   }
 
@@ -2074,12 +2086,14 @@ async function executeConfirmedRecordDelete() {
     // ignore
   }
 
-  const baseUrl = getFirebaseDatabaseUrl();
-  if (baseUrl) {
-    try {
-      await fetch(`${baseUrl}/spj_pjn3/records/${encodeURIComponent(key)}.json`, { method: "DELETE" });
-    } catch (e) {
-      // ignore
+  try {
+    await remove(ref(db, `spj_pjn3/records/${key}`));
+  } catch (e) {
+    const baseUrl = getFirebaseDatabaseUrl();
+    if (baseUrl) {
+      try {
+        await fetch(`${baseUrl}/spj_pjn3/records/${encodeURIComponent(key)}.json`, { method: "DELETE" });
+      } catch (err) {}
     }
   }
 
@@ -2094,22 +2108,33 @@ async function renderCloudRecordsList() {
 
   listEl.innerHTML = `<div class="text-xs text-slate-500 py-4 text-center">Memuat daftar file tersimpan...</div>`;
 
-  const baseUrl = getFirebaseDatabaseUrl();
   let recordsMap = {};
   let fromCloud = false;
 
-  if (baseUrl) {
-    try {
-      const res = await fetch(`${baseUrl}/spj_pjn3/records.json`);
-      if (res.ok) {
-        const cloudData = await res.json();
-        if (cloudData && typeof cloudData === "object") {
-          recordsMap = cloudData;
-          fromCloud = true;
-        }
+  try {
+    const snap = await get(ref(db, "spj_pjn3/records"));
+    if (snap.exists()) {
+      const cloudData = snap.val();
+      if (cloudData && typeof cloudData === "object") {
+        recordsMap = cloudData;
+        fromCloud = true;
       }
-    } catch (err) {
-      // fallback to local records
+    }
+  } catch (e) {}
+
+  if (!fromCloud) {
+    const baseUrl = getFirebaseDatabaseUrl();
+    if (baseUrl) {
+      try {
+        const res = await fetch(`${baseUrl}/spj_pjn3/records.json`);
+        if (res.ok) {
+          const cloudData = await res.json();
+          if (cloudData && typeof cloudData === "object") {
+            recordsMap = cloudData;
+            fromCloud = true;
+          }
+        }
+      } catch (err) {}
     }
   }
 
