@@ -1018,7 +1018,68 @@ async function refreshSpdNoSptDropdown(preferredNomor = null) {
     syncSpjFieldsFromSelectedSuratTugas(preferredNomor);
   }
 }
+selectEl.value = currentVal;
+  // TAMBAHAN: Sinkronkan dropdown Poin 2 Sheet 1 sesuai Surat Tugas yang aktif
+  if (cachedSuratTugasByNomor[selectEl.value]) {
+    populatePelaksanaDropdownFromSuratTugas(
+      cachedSuratTugasByNomor[selectEl.value],
+      document.getElementById("spd_pegawai_nama")?.value
+    );
+  }
+  if (preferredNomor && cachedSuratTugasByNomor[preferredNomor]) {
+    syncSpjFieldsFromSelectedSuratTugas(preferredNomor);
+  }
+}
 
+// FUNGSI BARU: Filter & tampilkan nama-nama Pelaksana SPD pada dropdown Poin 2 Sheet 1 (#spd_pegawai_nama)
+// sesuai dengan daftar pegawai ("Kepada") yang ada di Surat Tugas terpilih
+function populatePelaksanaDropdownFromSuratTugas(stData, preferredNama = null) {
+  const selectPegawaiEl = document.getElementById("spd_pegawai_nama");
+  if (!selectPegawaiEl) return;
+
+  const prevSelected = preferredNama || selectPegawaiEl.value || INITIAL_FORM_STATE.spd_pegawai_nama;
+
+  // Ambil daftar nama pelaksana dari Surat Tugas (array stData.pegawai)
+  const pelaksanaStList = (stData && Array.isArray(stData.pegawai))
+    ? stData.pegawai
+        .map(p => (p && p.nama ? String(p.nama).trim() : ""))
+        .filter(Boolean)
+    : [];
+
+  selectPegawaiEl.innerHTML = "";
+
+  if (pelaksanaStList.length > 0) {
+    // Tampilkan hanya nama-nama pelaksana yang tercantum di Surat Tugas tersebut
+    pelaksanaStList.forEach(namaPelaksana => {
+      const opt = document.createElement("option");
+      opt.value = namaPelaksana;
+      opt.textContent = namaPelaksana;
+      selectPegawaiEl.appendChild(opt);
+    });
+
+    // Jika nama sebelumnya ada di Surat Tugas ini maka pertahankan, jika tidak pilih pelaksana pertama
+    if (pelaksanaStList.includes(prevSelected)) {
+      selectPegawaiEl.value = prevSelected;
+    } else {
+      selectPegawaiEl.value = pelaksanaStList[0];
+    }
+  } else {
+    // Fallback: jika Surat Tugas belum memiliki daftar pegawai, tampilkan semua dari Database Pegawai
+    databasePegawai.forEach(emp => {
+      const opt = document.createElement("option");
+      opt.value = emp.nama;
+      opt.textContent = emp.nama;
+      selectPegawaiEl.appendChild(opt);
+    });
+
+    const exists = databasePegawai.some(e => e.nama === prevSelected);
+    if (exists) {
+      selectPegawaiEl.value = prevSelected;
+    } else if (databasePegawai.length > 0) {
+      selectPegawaiEl.value = databasePegawai[0].nama;
+    }
+  }
+}
 // Sinkronkan data Surat Tugas yang dipilih pada Poin 10 ke Poin 4, 5, 6, 7 di Sheet 1 & Uang Harian di Sheet 2
 function syncSpjFieldsFromSelectedSuratTugas(nomorSpt) {
   const key = String(nomorSpt || "").trim();
@@ -1043,6 +1104,37 @@ function syncSpjFieldsFromSelectedSuratTugas(nomorSpt) {
     };
   }
   if (!stData) return;
+
+  function syncSpjFieldsFromSelectedSuratTugas(nomorSpt) {
+  const key = String(nomorSpt || "").trim();
+  if (!key) return;
+
+  let stData = cachedSuratTugasByNomor[key] ? { ...cachedSuratTugasByNomor[key] } : null;
+
+  // Gabungkan juga data dari form Surat Tugas yang sedang aktif apabila nomornya sama
+  const liveNo = (document.getElementById("in-nomor")?.value || "").trim();
+  if (liveNo === key) {
+    stData = {
+      ...(stData || {}),
+      nomor: liveNo,
+      untuk1: document.getElementById("in-untuk-1")?.value || stData?.untuk1 || "",
+      untuk2: document.getElementById("in-untuk-2")?.value || stData?.untuk2 || "",
+      untuk3: document.getElementById("in-untuk-3")?.value || stData?.untuk3 || "",
+      untuk4: document.getElementById("in-untuk-4")?.value || stData?.untuk4 || "",
+      periodeMulaiIso: document.getElementById("in-periode-mulai")?.value || stData?.periodeMulaiIso || "",
+      periodeSelesaiIso: document.getElementById("in-periode-selesai")?.value || stData?.periodeSelesaiIso || "",
+      tanggalIso: document.getElementById("in-tanggal-picker")?.value || stData?.tanggalIso || "",
+      tanggal: document.getElementById("in-tanggal")?.value || stData?.tanggal || "",
+      // TAMBAHAN: sertakan array pegawai dari Surat Tugas
+      pegawai: (Array.isArray(pegawaiData) && pegawaiData.some(p => p && p.nama))
+        ? pegawaiData
+        : (stData?.pegawai || [])
+    };
+  }
+  if (!stData) return;
+
+  // TAMBAHAN: 0. Nama Pelaksana SPD pada Poin 2 Sheet 1 (dropdown disesuaikan dengan daftar pegawai di Surat Tugas)
+  populatePelaksanaDropdownFromSuratTugas(stData);
 
   // 1. Maksud Perjalanan Dinas (Poin 4 dari isian 1. Untuk/Keterangan Tugas)
   if (stData.untuk1 && String(stData.untuk1).trim() !== "" && String(stData.untuk1).trim() !== "...") {
@@ -1891,6 +1983,23 @@ function applyFormState(stateObj) {
         el.appendChild(opt);
       }
       el.value = valStr;
+      // TAMBAHAN: Sesuaikan isi dropdown Poin 2 dengan daftar pegawai Surat Tugas
+      if (cachedSuratTugasByNomor[valStr]) {
+        populatePelaksanaDropdownFromSuratTugas(
+          cachedSuratTugasByNomor[valStr],
+          stateObj.spd_pegawai_nama
+        );
+      }
+    } else if (id === "spd_pegawai_nama") {
+      // TAMBAHAN: Pastikan nama pegawai yang dimuat terpilih dengan benar di Poin 2
+      const valNama = String(stateObj[id] || "");
+      if (valNama && !Array.from(el.options).some(o => o.value === valNama)) {
+        const opt = document.createElement("option");
+        opt.value = valNama;
+        opt.textContent = valNama;
+        el.appendChild(opt);
+      }
+      el.value = valNama;
     } else {
       el.value = stateObj[id];
     }
