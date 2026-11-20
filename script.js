@@ -437,6 +437,22 @@ window.saveData = async function() {
     const nomorSurat = nomorEl.value.trim();
     if (nomorSurat === "") { await uiAlert("Nomor surat tidak boleh kosong!", "Peringatan"); return; }
 
+    // Validasi: tidak boleh ada dua pegawai yang sama dalam satu Surat Tugas
+    const seenPegawaiNames = new Set();
+    for (const p of pegawaiData) {
+        const namaClean = (p && p.nama) ? String(p.nama).trim() : "";
+        if (!namaClean) continue;
+        const keyNama = namaClean.toLowerCase();
+        if (seenPegawaiNames.has(keyNama)) {
+            await uiAlert(
+                `Terdapat pegawai yang sama ("${namaClean}") lebih dari satu kali pada Daftar Pegawai!\nHapus atau ganti salah satunya sebelum menyimpan.`,
+                "Pegawai Duplikat Ditolak"
+            );
+            return;
+        }
+        seenPegawaiNames.add(keyNama);
+    }
+
     const btnSave = document.querySelector('.btn-save');
     const oldText = btnSave.innerText;
     btnSave.innerText = "⏳ Mengunggah ke Cloud...";
@@ -569,11 +585,24 @@ window.renderPegawaiForms = function() {
     const btnStyle = window.isFormLocked ? 'display:none;' : '';
     const selectStyle = window.isFormLocked ? 'cursor:not-allowed; opacity:0.75; background:#f1f5f9;' : 'cursor:pointer; opacity:1; background:#fefce8;';
 
+    const sourceList = (databasePegawai.length ? databasePegawai : dbPegawai);
+
     pegawaiData.forEach((pegawai, index) => {
+        // Kumpulkan nama pegawai yang sudah dipilih di baris lain agar tidak bisa dipilih dua kali
+        const selectedElsewhere = new Set(
+            pegawaiData
+                .filter((other, i) => i !== index && other && other.nama && String(other.nama).trim() !== "")
+                .map(other => String(other.nama).trim().toLowerCase())
+        );
+
         let optionsHTML = '<option value="">-- Pilih Pegawai --</option>';
-        (databasePegawai.length ? databasePegawai : dbPegawai).forEach(p => {
-            let selected = (p.nama === pegawai.nama) ? 'selected' : '';
-            optionsHTML += `<option value="${p.nama}" ${selected}>${p.nama}</option>`;
+        sourceList.forEach(p => {
+            const namaNorm = String(p.nama || "").trim().toLowerCase();
+            const isSelected = (p.nama === pegawai.nama);
+            const isTakenElsewhere = !isSelected && selectedElsewhere.has(namaNorm);
+            const optDisabled = isTakenElsewhere ? 'disabled style="color:#94a3b8;"' : '';
+            const optLabel = isTakenElsewhere ? `${escapeHtml(p.nama)} (Sudah dipilih)` : escapeHtml(p.nama);
+            optionsHTML += `<option value="${escapeHtml(p.nama)}" ${isSelected ? 'selected' : ''} ${optDisabled}>${optLabel}</option>`;
         });
 
         container.innerHTML += `
@@ -592,10 +621,27 @@ window.renderPegawaiForms = function() {
 window.addPegawaiForm = function() { pegawaiData.push({ nama: "", nip: "", jabatan: "" }); window.renderPegawaiForms(); }
 window.removePegawai = function(index) { pegawaiData.splice(index, 1); window.renderPegawaiForms(); }
 
-window.updatePegawaiData = function(index, field, value) {
-    pegawaiData[index][field] = value;
+window.updatePegawaiData = async function(index, field, value) {
     if (field === 'nama') {
-        const found = (databasePegawai.length ? databasePegawai : dbPegawai).find(p => p.nama === value);
+        const cleanedVal = String(value || "").trim();
+        if (cleanedVal !== "") {
+            const valNorm = cleanedVal.toLowerCase();
+            const isDuplicate = pegawaiData.some((p, i) =>
+                i !== index && p && p.nama && String(p.nama).trim().toLowerCase() === valNorm
+            );
+            if (isDuplicate) {
+                // Tolak pilihan pegawai yang sama & kembalikan dropdown ke kondisi sebelumnya
+                window.renderPegawaiForms();
+                await uiAlert(
+                    `Pegawai "${cleanedVal}" sudah dipilih pada daftar Surat Tugas!\nTidak diperbolehkan memilih dua pegawai yang sama.`,
+                    "Pegawai Duplikat Ditolak"
+                );
+                return;
+            }
+        }
+
+        pegawaiData[index].nama = cleanedVal;
+        const found = (databasePegawai.length ? databasePegawai : dbPegawai).find(p => p.nama === cleanedVal);
         if (found) {
             pegawaiData[index].nip = found.nip;
             pegawaiData[index].jabatan = found.jabatan;
@@ -603,27 +649,30 @@ window.updatePegawaiData = function(index, field, value) {
             pegawaiData[index].nip = "";
             pegawaiData[index].jabatan = "";
         }
+        // Render ulang semua dropdown agar status "(Sudah dipilih)" ikut diperbarui
+        window.renderPegawaiForms();
+        return;
     }
+
+    pegawaiData[index][field] = value;
     window.updatePreview();
+}
+
+function formatSingleLineIndent(line) {
+    if (!line || !line.trim()) return '<div style="height: 5px;"></div>';
+    const match = line.match(/^([a-zA-Z0-9]+[\.\)])\s+(.*)/);
+    if (match) {
+        return `<div style="display: flex; margin-bottom: 0; text-align: justify; line-height: 1.15;">
+                    <div style="width: 18px; flex-shrink: 0;">${escapeHtml(match[1])}</div>
+                    <div style="flex-grow: 1;">${escapeHtml(match[2])}</div>
+                 </div>`;
+    }
+    return `<div style="margin-bottom: 0; text-align: justify; line-height: 1.15;">${escapeHtml(line)}</div>`;
 }
 
 function formatListIndent(text) {
     if(!text) return '';
-    const lines = text.split('\n');
-    let html = '';
-    lines.forEach(line => {
-        if (!line.trim()) { html += '<div style="height: 5px;"></div>'; return; }
-        const match = line.match(/^([a-zA-Z0-9]+[\.\)])\s+(.*)/);
-        if (match) {
-            html += `<div style="display: flex; margin-bottom: 0; text-align: justify; line-height: 1.15;">
-                        <div style="width: 18px; flex-shrink: 0;">${match[1]}</div>
-                        <div style="flex-grow: 1;">${match[2]}</div>
-                     </div>`;
-        } else {
-            html += `<div style="margin-bottom: 0; text-align: justify; line-height: 1.15;">${line}</div>`;
-        }
-    });
-    return html;
+    return text.split('\n').map(formatSingleLineIndent).join('');
 }
 
 function formatNIP(nip) {
@@ -636,25 +685,20 @@ function formatNIP(nip) {
 
 
 // ========================================================
-// 6. FUNGSI SMART SPACER (PENDORONG LOGO KAN KE BAWAH CENTER HALAMAN TERAKHIR)
+// 6 & 7. RENDER PRATINJAU TERBAGI PER HALAMAN A4 + LOGO KAN DI BAWAH CENTER HALAMAN TERAKHIR
 // ========================================================
-window.adjustPageHeight = function() {
-    const konten = document.querySelector('#module-surat-tugas .konten-utama');
-    const spacer = document.getElementById('spacer');
-    const footer = document.querySelector('#module-surat-tugas .footer-kan');
-    
-    if (!konten || !spacer || !footer) return;
+let stLastMeasuredKopHeight = 0;
 
-    // Jangan hitung saat modul Surat Tugas sedang tersembunyi (display: none)
-    const kontenRect = konten.getBoundingClientRect();
-    if (kontenRect.height <= 0) return;
-    
-    // 1. Reset spacer dan aturan pemisah halaman sebelum mengukur tinggi asli
-    spacer.style.height = '0px';
-    spacer.style.pageBreakBefore = 'auto';
-    spacer.style.breakBefore = 'auto';
-    
-    // 2. Ukur rasio pixel per milimeter yang akurat pada perangkat saat ini
+window.renderPaginatedSuratTugas = function() {
+    const pagesContainer = document.getElementById('st-pages-container');
+    if (!pagesContainer) return;
+
+    // Jika Modul Surat Tugas sedang tersembunyi (display: none), tunda pengukuran hingga tampil
+    if (pagesContainer.offsetParent === null) return;
+
+    const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ""; };
+
+    // Ukur rasio pixel per milimeter yang presisi pada perangkat saat ini
     const mmRef = document.createElement('div');
     mmRef.style.height = '100mm';
     mmRef.style.position = 'absolute';
@@ -663,109 +707,258 @@ window.adjustPageHeight = function() {
     const pxPerMm = mmRef.getBoundingClientRect().height / 100;
     document.body.removeChild(mmRef);
     if (!pxPerMm || pxPerMm <= 0) return;
-    
-    // 3. Ruang Cetak Bersih A4 (297mm - Margin Atas 15mm - Margin Bawah 15mm = 267mm)
-    // Gunakan 265mm (toleransi aman 2mm) agar saat cetak/PDF tidak memicu halaman kosong tambahan
-    const pageHeightPx = 265 * pxPerMm;
-    
-    // 4. Ukur tinggi aktual konten & tinggi logo KAN (fallback 1cm = 10mm jika gambar belum selesai termuat)
-    let effectiveKontenHeight = konten.getBoundingClientRect().height;
-    const footerHeight = footer.getBoundingClientRect().height || (10 * pxPerMm);
 
-    // Deteksi jika blok tanda tangan (.ttd-section) terpotong batas halaman sehingga akan melompat utuh ke halaman berikutnya saat cetak/PDF
-    const ttdEl = konten.querySelector('.ttd-section');
-    if (ttdEl) {
-        const ttdRect = ttdEl.getBoundingClientRect();
-        const ttdTopRel = ttdRect.top - kontenRect.top;
-        const ttdBottomRel = ttdRect.bottom - kontenRect.top;
-        const startPage = Math.floor(ttdTopRel / pageHeightPx);
-        const endPage = Math.floor(Math.max(0, ttdBottomRel - 1) / pageHeightPx);
-        if (endPage > startPage) {
-            effectiveKontenHeight = Math.max(
-                effectiveKontenHeight,
-                ((startPage + 1) * pageHeightPx) + ttdRect.height
-            );
+    // Ruang cetak bersih per halaman A4 (297mm - 30mm margin atas & bawah = 267mm; gunakan 264mm sebagai batas aman)
+    const pageInnerHeightPx = 264 * pxPerMm;
+    // Ruang khusus Logo KAN di bagian bawah halaman terakhir (tinggi logo 10mm + jarak napas 4mm)
+    const footerReservePx = 14 * pxPerMm;
+
+    pagesContainer.innerHTML = '';
+    const pages = [];
+
+    function createPage() {
+        const pageEl = document.createElement('div');
+        pageEl.className = 'kertas-a4 st-page';
+
+        const bodyEl = document.createElement('div');
+        bodyEl.className = 'st-page-body';
+
+        const flowEl = document.createElement('div');
+        flowEl.className = 'st-flow-content';
+
+        bodyEl.appendChild(flowEl);
+        pageEl.appendChild(bodyEl);
+        pagesContainer.appendChild(pageEl);
+
+        const pageObj = { pageEl, bodyEl, flowEl, tbody: null };
+        pages.push(pageObj);
+        return pageObj;
+    }
+
+    function ensureTable(pageObj) {
+        if (!pageObj.tbody) {
+            const tbl = document.createElement('table');
+            tbl.className = 'isi-surat';
+            const tbody = document.createElement('tbody');
+            tbl.appendChild(tbody);
+            pageObj.flowEl.appendChild(tbl);
+            pageObj.tbody = tbody;
+        }
+        return pageObj.tbody;
+    }
+
+    function appendRowWithAutoSplit(tr) {
+        let cur = pages[pages.length - 1];
+        let tbody = ensureTable(cur);
+        const hadPrevContent = cur.flowEl.children.length > 1 || tbody.children.length > 0;
+        tbody.appendChild(tr);
+
+        if (hadPrevContent && cur.flowEl.offsetHeight > pageInnerHeightPx) {
+            tbody.removeChild(tr);
+            if (tbody.children.length === 0 && tbody.parentNode) {
+                tbody.parentNode.remove();
+                cur.tbody = null;
+            }
+            cur = createPage();
+            tbody = ensureTable(cur);
+            tbody.appendChild(tr);
+        }
+        return cur;
+    }
+
+    // 1. Buat Halaman 1 & isi Kop Surat + Judul Surat
+    const firstPage = createPage();
+
+    const kopWrap = document.createElement('div');
+    kopWrap.className = 'kop-surat-container';
+    const kopImg = document.createElement('img');
+    kopImg.className = 'kop-surat-img';
+    kopImg.src = 'kop_surat.png';
+    kopImg.alt = 'Kop Surat';
+    kopImg.onerror = function() {
+        this.onerror = null;
+        this.src = '';
+        this.alt = '[Gambar kop_surat.png tidak ditemukan]';
+        this.style.border = '1px dashed red';
+        this.style.padding = '20px';
+    };
+    kopImg.onload = function() {
+        const h = this.offsetHeight;
+        if (h > 0 && Math.abs(h - stLastMeasuredKopHeight) > 2) {
+            stLastMeasuredKopHeight = h;
+            window.renderPaginatedSuratTugas();
+        }
+    };
+    kopWrap.appendChild(kopImg);
+    firstPage.flowEl.appendChild(kopWrap);
+
+    const judulWrap = document.createElement('div');
+    judulWrap.className = 'judul-surat';
+    judulWrap.innerHTML = `<h1>SURAT TUGAS</h1><p>NOMOR <span>${escapeHtml(getVal('in-nomor'))}</span></p>`;
+    firstPage.flowEl.appendChild(judulWrap);
+
+    // Helper menambahkan satu bagian (Menimbang, Dasar, Kepada, Untuk) baris demi baris agar terbagi rapi antar halaman
+    function appendSectionRows(labelText, itemsHtmlArray) {
+        const list = itemsHtmlArray.length > 0 ? itemsHtmlArray : [''];
+        let firstTrRef = null;
+        let firstPageRef = null;
+
+        list.forEach((itemHtml, idx) => {
+            const tr = document.createElement('tr');
+            const isFirst = idx === 0;
+            const isLast = idx === list.length - 1;
+            const classes = [isFirst ? 'st-row-start' : 'st-row-cont'];
+            if (isLast) classes.push('st-row-end');
+            tr.className = classes.join(' ');
+
+            tr.innerHTML = `
+                <td class="col-label">${isFirst ? escapeHtml(labelText) : ''}</td>
+                <td class="col-titikdua">${isFirst ? ':' : ''}</td>
+                <td class="col-konten">${itemHtml}</td>
+            `;
+            const placedPage = appendRowWithAutoSplit(tr);
+            if (isFirst) {
+                firstTrRef = tr;
+                firstPageRef = placedPage;
+            }
+        });
+
+        return { firstTrRef, firstPageRef };
+    }
+
+    // 2. Bagian Menimbang
+    const menimbangLines = getVal('in-menimbang').split('\n').map(formatSingleLineIndent);
+    appendSectionRows('Menimbang', menimbangLines);
+
+    // 3. Bagian Dasar
+    const dasarLines = getVal('in-dasar').split('\n').map(formatSingleLineIndent);
+    appendSectionRows('Dasar', dasarLines);
+
+    // 4. Baris Pemisah "MEMBERI TUGAS"
+    const trMemberi = document.createElement('tr');
+    trMemberi.innerHTML = `<td colspan="3"><div class="memberi-tugas">MEMBERI TUGAS</div></td>`;
+    const memberiPage = appendRowWithAutoSplit(trMemberi);
+
+    // 5. Bagian Kepada (Daftar Pegawai)
+    const activePegawaiHtml = [];
+    let pegNo = 1;
+    pegawaiData.forEach((p) => {
+        if (p && p.nama && String(p.nama).trim() !== "") {
+            activePegawaiHtml.push(`
+                <div style="display: flex; margin-bottom: 0; line-height: 1.15; page-break-inside: avoid; break-inside: avoid;">
+                    <div style="width: 18px; flex-shrink: 0;">${pegNo}.</div>
+                    <div style="flex-grow: 1;">
+                        <div style="margin: 0;">${escapeHtml(p.nama)}</div>
+                        <div style="margin: 0;">${escapeHtml(formatNIP(p.nip))}</div>
+                        <div style="margin: 0;">${escapeHtml(p.jabatan)}</div>
+                    </div>
+                </div>
+            `);
+            pegNo++;
+        }
+    });
+    const kepadaPlacement = appendSectionRows('Kepada', activePegawaiHtml);
+
+    // Jangan biarkan judul "MEMBERI TUGAS" tertinggal sendirian di dasar halaman jika pegawai pertama pindah ke halaman berikutnya
+    if (kepadaPlacement.firstPageRef && kepadaPlacement.firstPageRef !== memberiPage && kepadaPlacement.firstTrRef) {
+        if (trMemberi.parentNode) {
+            const oldTbody = trMemberi.parentNode;
+            oldTbody.removeChild(trMemberi);
+            if (oldTbody.children.length === 0 && oldTbody.parentNode) {
+                oldTbody.parentNode.remove();
+                memberiPage.tbody = null;
+            }
+        }
+        const targetTbody = kepadaPlacement.firstTrRef.parentNode;
+        if (targetTbody) {
+            targetTbody.insertBefore(trMemberi, kepadaPlacement.firstTrRef);
         }
     }
-    
-    // 5. Hitung jumlah halaman yang ditempati konten dan sisa ruang di halaman terakhir
-    const kontenPages = Math.max(1, Math.ceil(effectiveKontenHeight / pageHeightPx));
-    let usedOnLastPage = effectiveKontenHeight - ((kontenPages - 1) * pageHeightPx);
-    if (usedOnLastPage <= 0 && effectiveKontenHeight > 0) {
-        usedOnLastPage = pageHeightPx;
+
+    // 6. Bagian Untuk (Poin 1 s/d 5)
+    const untukItems = [];
+    let noUntuk = 1;
+    for (let i = 1; i <= 5; i++) {
+        const val = getVal(`in-untuk-${i}`).trim();
+        if (val) {
+            const subLines = val.split('\n');
+            const firstLine = `${noUntuk}. ${subLines[0]}`;
+            untukItems.push(formatSingleLineIndent(firstLine));
+            for (let j = 1; j < subLines.length; j++) {
+                untukItems.push(formatSingleLineIndent(subLines[j]));
+            }
+            noUntuk++;
+        }
+    }
+    appendSectionRows('Untuk', untukItems);
+
+    // 7. Bagian Tanda Tangan (.ttd-section) — pastikan cukup ruang bersama Logo KAN di halaman terakhir
+    const ttdWrap = document.createElement('div');
+    ttdWrap.className = 'st-ttd-wrap';
+    const tempatStr = escapeHtml(getVal('in-tempat') || 'Makassar');
+    const tanggalStr = escapeHtml(getVal('in-tanggal'));
+    const ttdJabatanHtml = escapeHtml(getVal('in-ttd-jabatan')).replace(/\n/g, '<br>');
+    const ttdNamaStr = escapeHtml(getVal('in-ttd-nama'));
+
+    ttdWrap.innerHTML = `
+        <div class="ttd-section">
+            <p><span>${tempatStr}</span>, <span>${tanggalStr}</span></p>
+            <div><p style="margin: 2px 0; line-height: 1.15;">${ttdJabatanHtml}</p></div>
+            <div class="ttd-nama">${ttdNamaStr}</div>
+        </div>
+        <div style="clear: both;"></div>
+    `;
+
+    let lastPage = pages[pages.length - 1];
+    const hadContentBeforeTtd = lastPage.flowEl.children.length > 0;
+    lastPage.flowEl.appendChild(ttdWrap);
+
+    if (hadContentBeforeTtd && (lastPage.flowEl.offsetHeight + footerReservePx > pageInnerHeightPx)) {
+        lastPage.flowEl.removeChild(ttdWrap);
+        lastPage = createPage();
+        lastPage.flowEl.appendChild(ttdWrap);
     }
 
-    // 6. Tempatkan Logo KAN tepat di paling bawah halaman terakhir
-    if (usedOnLastPage + footerHeight <= pageHeightPx) {
-        // Logo KAN masih muat di halaman terakhir konten -> dorong ke dasar halaman tersebut
-        const fillSpace = Math.max(0, Math.floor(pageHeightPx - usedOnLastPage - footerHeight));
-        spacer.style.height = fillSpace + 'px';
-    } else {
-        // Jika sisa halaman tidak cukup untuk Logo KAN -> pindah rapi ke halaman baru & dorong ke paling bawah
-        spacer.style.pageBreakBefore = 'always';
-        spacer.style.breakBefore = 'page';
-        const fillSpace = Math.max(0, Math.floor(pageHeightPx - footerHeight));
-        spacer.style.height = fillSpace + 'px';
-    }
+    // 8. Tempatkan LOGO KAN tepat di paling bawah & center pada HALAMAN TERAKHIR
+    const footerKan = document.createElement('div');
+    footerKan.className = 'footer-kan';
+    const logoImg = document.createElement('img');
+    logoImg.src = 'Logo KAN ISO 300701 2016.png';
+    logoImg.alt = 'Logo KAN';
+    logoImg.onerror = function() {
+        this.onerror = null;
+        this.src = '';
+        this.alt = '[Logo KAN tidak ditemukan]';
+        this.style.border = '1px dashed red';
+        this.style.padding = '10px';
+    };
+    footerKan.appendChild(logoImg);
+    pages[pages.length - 1].pageEl.appendChild(footerKan);
+
+    // 9. Tambahkan penanda nomor halaman di sudut kanan atas tiap halaman pada pratinjau layar (tidak ikut dicetak)
+    const totalPages = pages.length;
+    pages.forEach((pObj, idx) => {
+        const badge = document.createElement('div');
+        badge.className = 'st-page-badge no-print';
+        badge.textContent = `Halaman ${idx + 1} / ${totalPages}`;
+        pObj.pageEl.appendChild(badge);
+    });
+};
+
+window.adjustPageHeight = function() {
+    if (window.renderPaginatedSuratTugas) window.renderPaginatedSuratTugas();
 };
 
 window.printSuratTugas = function() {
-    if (window.adjustPageHeight) window.adjustPageHeight();
+    if (window.renderPaginatedSuratTugas) window.renderPaginatedSuratTugas();
     setTimeout(() => {
         window.print();
     }, 40);
 };
 
-// ========================================================
-// 7. RENDER PREVIEW AKHIR
-// ========================================================
 window.updatePreview = function() {
-    const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ""; };
-    const setHtml = (id, html) => { const el = document.getElementById(id); if(el) el.innerHTML = html; };
-    const setText = (id, text) => { const el = document.getElementById(id); if(el) el.innerText = text; };
-
-    setText('out-nomor', getVal('in-nomor'));
-    setText('out-tempat', getVal('in-tempat') || 'Makassar');
-    setText('out-tanggal', getVal('in-tanggal'));
-    
-    const ttdJabatanText = getVal('in-ttd-jabatan').replace(/\n/g, '<br>');
-    setHtml('out-ttd-jabatan', `<p style="margin: 2px 0; line-height: 1.15;">${ttdJabatanText}</p>`);
-    setText('out-ttd-nama', getVal('in-ttd-nama'));
-    
-    setHtml('out-menimbang', formatListIndent(getVal('in-menimbang')));
-    setHtml('out-dasar', formatListIndent(getVal('in-dasar')));
-    
-    let arrUntuk = []; let no = 1;
-    for(let i=1; i<=5; i++) {
-        const val = getVal(`in-untuk-${i}`).trim();
-        if(val) { arrUntuk.push(`${no}. ${val}`); no++; }
-    }
-    setHtml('out-untuk', formatListIndent(arrUntuk.join('\n')));
-
-    const outPegawai = document.getElementById('out-pegawai');
-    if(outPegawai) {
-        outPegawai.innerHTML = '';
-        pegawaiData.forEach((p, index) => {
-            if(p.nama && p.nama.trim() !== "") { 
-                outPegawai.innerHTML += `
-                    <div style="display: flex; margin-bottom: 0; line-height: 1.15; page-break-inside: avoid; break-inside: avoid;">
-                        <div style="width: 18px; flex-shrink: 0;">${index + 1}.</div>
-                        <div style="flex-grow: 1;">
-                            <div style="margin: 0;">${p.nama}</div>
-                            <div style="margin: 0;">${formatNIP(p.nip)}</div>
-                            <div style="margin: 0;">${p.jabatan}</div>
-                        </div>
-                    </div>
-                `;
-            }
-        });
-    }
-
-    // MEMANGGIL FITUR SMART SPACER SETELAH TEKS BERUBAH
-    setTimeout(() => { 
-        if(window.adjustPageHeight) window.adjustPageHeight(); 
-    }, 50);
-}
+    if (window.renderPaginatedSuratTugas) window.renderPaginatedSuratTugas();
+};
 
 function initSuratTugasModule() {
     const today = new Date();
