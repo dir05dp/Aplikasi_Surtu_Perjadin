@@ -27,7 +27,7 @@ body {
    PENGATURAN KERTAS A4S (210mm x 297mm) DENGAN MARGIN 1.5 CM & FONT ARIAL
    ========================================================================== */
 @page {
-  size: A4 portrait;
+  /* Tanpa properti size agar menu More Settings -> Skala (Scale), Ukuran Kertas & Tata Letak selalu muncul saat Print / Save as PDF */
   margin: 1.5cm;
 }
 
@@ -297,6 +297,10 @@ body.locked-mode .linked-field {
     background: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
   }
 
   .no-print {
@@ -1031,7 +1035,7 @@ table.isi-surat tr.st-row-end td { padding-bottom: 2px; }
     padding: 0 !important;
 }
 .footer-kan img {
-    height: 1cm;
+    height: 0.8cm;
     width: auto;
     display: block !important;
     margin: 0 auto !important;
@@ -1101,15 +1105,21 @@ table.isi-surat tr.st-row-end td { padding-bottom: 2px; }
     display: none !important;
   }
 
-  body.active-module-st #module-surat-tugas {
+  body.active-module-st #module-surat-tugas,
+  body.active-module-st #module-surat-tugas.st-module-wrapper {
     display: block !important;
+    width: 100% !important;
     height: auto !important;
+    min-height: 0 !important;
     overflow: visible !important;
     background: white !important;
   }
 
   body.active-module-st .preview-container {
     padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
     background: white !important;
     display: block !important;
     overflow: visible !important;
@@ -1117,6 +1127,8 @@ table.isi-surat tr.st-row-end td { padding-bottom: 2px; }
 
   body.active-module-st .st-pages-container {
     display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
     gap: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -1132,30 +1144,44 @@ table.isi-surat tr.st-row-end td { padding-bottom: 2px; }
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
-    height: 266mm !important;
-    min-height: 266mm !important;
-    max-height: 266mm !important;
-    display: flex !important;
-    flex-direction: column !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    display: block !important;
+    overflow: visible !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
     page-break-after: always !important;
     break-after: page !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-    overflow: hidden !important;
   }
 
   body.active-module-st .kertas-a4:last-child {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 260mm !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
     page-break-after: auto !important;
     break-after: auto !important;
   }
 
   body.active-module-st .st-page-body {
-    flex: 1 1 auto !important;
+    flex: 1 0 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body.active-module-st .st-flow-content {
+    width: 100% !important;
     overflow: visible !important;
   }
 
   body.active-module-st .footer-kan {
     width: 100% !important;
+    margin-top: auto !important;
+    padding-top: 8px !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
