@@ -780,10 +780,10 @@ window.renderPaginatedSuratTugas = function() {
     document.body.removeChild(mmRef);
     if (!pxPerMm || pxPerMm <= 0) return;
 
-    // Ruang cetak bersih per halaman A4 (297mm - 12mm margin atas - 10mm margin bawah = 275mm; gunakan 268mm sebagai batas aman cetak/PDF)
-    const pageInnerHeightPx = 268 * pxPerMm;
-    // Ruang khusus Logo KAN di bagian bawah halaman terakhir (tinggi logo 10mm + jarak napas 4mm)
-    const footerReservePx = 14 * pxPerMm;
+    // Ruang cetak bersih per halaman A4 (297mm - 12mm margin atas - 10mm margin bawah = 275mm; gunakan 273mm agar tidak menyia-nyiakan ruang halaman)
+    const pageInnerHeightPx = 273 * pxPerMm;
+    // Ruang khusus Logo KAN di bagian bawah halaman terakhir (tinggi logo 0,8cm = 8mm + jarak napas 2mm)
+    const footerReservePx = 10 * pxPerMm;
 
     pagesContainer.innerHTML = '';
     const pages = [];
@@ -985,10 +985,24 @@ window.renderPaginatedSuratTugas = function() {
     const hadContentBeforeTtd = lastPage.flowEl.children.length > 0;
     lastPage.flowEl.appendChild(ttdWrap);
 
-    if (hadContentBeforeTtd && (lastPage.flowEl.offsetHeight + footerReservePx > pageInnerHeightPx)) {
-        lastPage.flowEl.removeChild(ttdWrap);
-        lastPage = createPage();
-        lastPage.flowEl.appendChild(ttdWrap);
+    // Hitung ruang maksimal aktual untuk konten + tanda tangan di atas Logo KAN (0,8cm)
+    const maxHeightWithFooterPx = Math.max(
+        pageInnerHeightPx - footerReservePx,
+        (lastPage.bodyEl.clientHeight || pageInnerHeightPx) - footerReservePx
+    );
+
+    if (hadContentBeforeTtd && (lastPage.flowEl.offsetHeight > maxHeightWithFooterPx)) {
+        // Coba rapatkan sedikit jarak atas tanda tangan terlebih dahulu agar tetap muat di halaman yang sama
+        const ttdSec = ttdWrap.querySelector('.ttd-section');
+        if (ttdSec) ttdSec.style.marginTop = '10px';
+
+        // Hanya pindahkan tanda tangan ke halaman berikutnya jika benar-benar tidak muat lagi
+        if (lastPage.flowEl.offsetHeight > maxHeightWithFooterPx) {
+            if (ttdSec) ttdSec.style.marginTop = '';
+            lastPage.flowEl.removeChild(ttdWrap);
+            lastPage = createPage();
+            lastPage.flowEl.appendChild(ttdWrap);
+        }
     }
 
     // 8. Tempatkan LOGO KAN tepat di paling bawah & center pada HALAMAN TERAKHIR
