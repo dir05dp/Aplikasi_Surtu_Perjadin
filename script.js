@@ -748,7 +748,7 @@ window.updatePreview = function() {
         pegawaiData.forEach((p, index) => {
             if(p.nama && p.nama.trim() !== "") { 
                 outPegawai.innerHTML += `
-    <div style="display: flex; margin-bottom: 0; line-height: 1.15; page-break-inside: avoid; break-inside: avoid;">
+                    <div style="display: flex; margin-bottom: 0; line-height: 1.15; page-break-inside: avoid; break-inside: avoid;">
                         <div style="width: 18px; flex-shrink: 0;">${index + 1}.</div>
                         <div style="flex-grow: 1;">
                             <div style="margin: 0;">${p.nama}</div>
@@ -807,7 +807,8 @@ function initSuratTugasModule() {
             });
         }
     });
-// Hitung ulang posisi Logo KAN begitu gambar Kop Surat & Logo KAN selesai dimuat, layar diubah ukurannya, atau sebelum cetak/PDF
+
+    // Hitung ulang posisi Logo KAN begitu gambar Kop Surat & Logo KAN selesai dimuat, layar diubah ukurannya, atau sebelum cetak/PDF
     document.querySelectorAll('#module-surat-tugas .kop-surat-img, #module-surat-tugas .footer-kan img').forEach(img => {
         img.addEventListener('load', () => {
             if (window.adjustPageHeight) window.adjustPageHeight();
@@ -824,6 +825,7 @@ function initSuratTugasModule() {
             window.adjustPageHeight();
         }
     });
+
     pegawaiData = [{ nama: "", nip: "", jabatan: "" }];
     window.applyStLockState(); // Mengaktifkan gembok Surat Tugas saat pertama kali dibuka
     window.switchPortalModule("st"); // Pastikan pertama kali dibuka langsung tampil Aplikasi Surat Tugas
