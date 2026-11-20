@@ -437,13 +437,15 @@ window.saveData = async function() {
     const nomorSurat = nomorEl.value.trim();
     if (nomorSurat === "") { await uiAlert("Nomor surat tidak boleh kosong!", "Peringatan"); return; }
 
-    // Validasi: tidak boleh ada dua pegawai yang sama dalam satu Surat Tugas
+    // Validasi: tidak boleh ada dua pegawai yang sama (Nama sama maupun NIP sama) dalam satu Surat Tugas
     const seenPegawaiNames = new Set();
+    const seenPegawaiNips = new Set();
     for (const p of pegawaiData) {
         const namaClean = (p && p.nama) ? String(p.nama).trim() : "";
         if (!namaClean) continue;
-        const keyNama = namaClean.toLowerCase();
-        if (seenPegawaiNames.has(keyNama)) {
+        const keyNama = normalizePegawaiNama(namaClean);
+        const keyNip = normalizePegawaiNip(p.nip);
+        if (seenPegawaiNames.has(keyNama) || (keyNip && seenPegawaiNips.has(keyNip))) {
             await uiAlert(
                 `Terdapat pegawai yang sama ("${namaClean}") lebih dari satu kali pada Daftar Pegawai!\nHapus atau ganti salah satunya sebelum menyimpan.`,
                 "Pegawai Duplikat Ditolak"
@@ -451,6 +453,7 @@ window.saveData = async function() {
             return;
         }
         seenPegawaiNames.add(keyNama);
+        if (keyNip) seenPegawaiNips.add(keyNip);
     }
 
     const btnSave = document.querySelector('.btn-save');
@@ -576,61 +579,120 @@ window.deleteData = async function(idCloud) {
 // 5. LOGIKA FORM PEGAWAI & RENDER PRATINJAU KERTAS
 // ========================================================
 
+function normalizePegawaiNama(nama) {
+    return String(nama || "").trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function normalizePegawaiNip(nip) {
+    const cleaned = String(nip || "")
+        .replace(/^nip\s*/i, "")
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .toLowerCase();
+    if (!cleaned || cleaned === "na" || cleaned === "nan") return "";
+    return cleaned;
+}
+
 window.renderPegawaiForms = function() {
     const container = document.getElementById('pegawai-container');
     if(!container) return;
-    container.innerHTML = '';
     
     const disabledAttr = window.isFormLocked ? 'disabled' : '';
     const btnStyle = window.isFormLocked ? 'display:none;' : '';
     const selectStyle = window.isFormLocked ? 'cursor:not-allowed; opacity:0.75; background:#f1f5f9;' : 'cursor:pointer; opacity:1; background:#fefce8;';
 
     const sourceList = (databasePegawai.length ? databasePegawai : dbPegawai);
+    let allItemsHTML = '';
 
     pegawaiData.forEach((pegawai, index) => {
-        // Kumpulkan nama pegawai yang sudah dipilih di baris lain agar tidak bisa dipilih dua kali
-        const selectedElsewhere = new Set(
-            pegawaiData
-                .filter((other, i) => i !== index && other && other.nama && String(other.nama).trim() !== "")
-                .map(other => String(other.nama).trim().toLowerCase())
-        );
+        const currentNamaNorm = normalizePegawaiNama(pegawai.nama);
+        const currentNipNorm = normalizePegawaiNip(pegawai.nip);
 
-        let optionsHTML = '<option value="">-- Pilih Pegawai --</option>';
-        sourceList.forEach(p => {
-            const namaNorm = String(p.nama || "").trim().toLowerCase();
-            const isSelected = (p.nama === pegawai.nama);
-            const isTakenElsewhere = !isSelected && selectedElsewhere.has(namaNorm);
-            const optDisabled = isTakenElsewhere ? 'disabled style="color:#94a3b8;"' : '';
-            const optLabel = isTakenElsewhere ? `${escapeHtml(p.nama)} (Sudah dipilih)` : escapeHtml(p.nama);
-            optionsHTML += `<option value="${escapeHtml(p.nama)}" ${isSelected ? 'selected' : ''} ${optDisabled}>${optLabel}</option>`;
+        // Kumpulkan Nama & NIP pegawai yang sudah dipilih di baris lain
+        const selectedNamesElsewhere = new Set();
+        const selectedNipsElsewhere = new Set();
+        pegawaiData.forEach((other, i) => {
+            if (i === index || !other) return;
+            const oNama = normalizePegawaiNama(other.nama);
+            const oNip = normalizePegawaiNip(other.nip);
+            if (oNama) selectedNamesElsewhere.add(oNama);
+            if (oNip) selectedNipsElsewhere.add(oNip);
         });
 
-        container.innerHTML += `
+        let optionsHTML = '<option value="">-- Pilih Pegawai --</option>';
+        let currentFoundInOptions = (currentNamaNorm === "");
+        const addedInThisSelect = new Set();
+
+        sourceList.forEach(p => {
+            if (!p || !p.nama) return;
+            const pNamaClean = String(p.nama).trim();
+            const pNamaNorm = normalizePegawaiNama(pNamaClean);
+            const pNipNorm = normalizePegawaiNip(p.nip);
+
+            // Hindari duplikasi nama identik di dalam dropdown yang sama
+            if (addedInThisSelect.has(pNamaNorm)) return;
+
+            const isSelected = (currentNamaNorm !== "" && pNamaNorm === currentNamaNorm);
+            const isTakenElsewhere = !isSelected && (
+                selectedNamesElsewhere.has(pNamaNorm) ||
+                (pNipNorm !== "" && selectedNipsElsewhere.has(pNipNorm))
+            );
+
+            // SEMBUNYIKAN sepenuhnya pegawai yang sudah dipilih di baris lain agar tidak bisa dipilih lagi
+            if (isTakenElsewhere) return;
+
+            addedInThisSelect.add(pNamaNorm);
+            if (isSelected) currentFoundInOptions = true;
+            optionsHTML += `<option value="${escapeHtml(pNamaClean)}" ${isSelected ? 'selected' : ''}>${escapeHtml(pNamaClean)}</option>`;
+        });
+
+        // Jika surat lama memuat nama pegawai yang sudah tidak ada di database, tetap tampilkan agar tidak hilang
+        if (!currentFoundInOptions && pegawai.nama) {
+            const fallbackNama = String(pegawai.nama).trim();
+            optionsHTML += `<option value="${escapeHtml(fallbackNama)}" selected>${escapeHtml(fallbackNama)}</option>`;
+        }
+
+        allItemsHTML += `
             <div class="pegawai-item">
                 <button type="button" class="remove-btn" style="${btnStyle}" onclick="removePegawai(${index})">Hapus</button>
                 <strong style="font-size: 13px; color: #162a5c;">Pegawai ${index + 1}</strong>
-                <select ${disabledAttr} onchange="updatePegawaiData(${index}, 'nama', this.value)" style="margin-top: 6px; width: 100%; padding: 7px 9px; border: 1px solid #eab308; border-radius: 6px; font-weight: 700; outline: none; font-size: 13.5px; font-family: inherit; color: #0f172a; ${selectStyle}">
+                <select ${disabledAttr} onchange="updatePegawaiData(${index}, 'nama', this.value, this)" style="margin-top: 6px; width: 100%; padding: 7px 9px; border: 1px solid #eab308; border-radius: 6px; font-weight: 700; outline: none; font-size: 13.5px; font-family: inherit; color: #0f172a; ${selectStyle}">
                     ${optionsHTML}
                 </select>
             </div>
         `;
     });
+
+    container.innerHTML = allItemsHTML;
     window.updatePreview();
 }
 
 window.addPegawaiForm = function() { pegawaiData.push({ nama: "", nip: "", jabatan: "" }); window.renderPegawaiForms(); }
 window.removePegawai = function(index) { pegawaiData.splice(index, 1); window.renderPegawaiForms(); }
 
-window.updatePegawaiData = async function(index, field, value) {
+window.updatePegawaiData = async function(index, field, value, selectEl = null) {
     if (field === 'nama') {
         const cleanedVal = String(value || "").trim();
+        const sourceList = (databasePegawai.length ? databasePegawai : dbPegawai);
+        const found = cleanedVal
+            ? sourceList.find(p => normalizePegawaiNama(p.nama) === normalizePegawaiNama(cleanedVal))
+            : null;
+
         if (cleanedVal !== "") {
-            const valNorm = cleanedVal.toLowerCase();
-            const isDuplicate = pegawaiData.some((p, i) =>
-                i !== index && p && p.nama && String(p.nama).trim().toLowerCase() === valNorm
-            );
+            const valNamaNorm = normalizePegawaiNama(cleanedVal);
+            const valNipNorm = found ? normalizePegawaiNip(found.nip) : "";
+
+            const isDuplicate = pegawaiData.some((p, i) => {
+                if (i === index || !p) return false;
+                const pNamaNorm = normalizePegawaiNama(p.nama);
+                const pNipNorm = normalizePegawaiNip(p.nip);
+                if (pNamaNorm && pNamaNorm === valNamaNorm) return true;
+                if (valNipNorm && pNipNorm && pNipNorm === valNipNorm) return true;
+                return false;
+            });
+
             if (isDuplicate) {
-                // Tolak pilihan pegawai yang sama & kembalikan dropdown ke kondisi sebelumnya
+                // Kembalikan dropdown ke nilai sebelumnya dan tampilkan peringatan
+                if (selectEl) selectEl.value = pegawaiData[index]?.nama || "";
                 window.renderPegawaiForms();
                 await uiAlert(
                     `Pegawai "${cleanedVal}" sudah dipilih pada daftar Surat Tugas!\nTidak diperbolehkan memilih dua pegawai yang sama.`,
@@ -641,7 +703,6 @@ window.updatePegawaiData = async function(index, field, value) {
         }
 
         pegawaiData[index].nama = cleanedVal;
-        const found = (databasePegawai.length ? databasePegawai : dbPegawai).find(p => p.nama === cleanedVal);
         if (found) {
             pegawaiData[index].nip = found.nip;
             pegawaiData[index].jabatan = found.jabatan;
@@ -649,7 +710,8 @@ window.updatePegawaiData = async function(index, field, value) {
             pegawaiData[index].nip = "";
             pegawaiData[index].jabatan = "";
         }
-        // Render ulang semua dropdown agar status "(Sudah dipilih)" ikut diperbarui
+
+        // Render ulang semua dropdown agar pegawai yang baru dipilih langsung hilang dari pilihan baris lain
         window.renderPegawaiForms();
         return;
     }
