@@ -780,8 +780,8 @@ window.renderPaginatedSuratTugas = function() {
     document.body.removeChild(mmRef);
     if (!pxPerMm || pxPerMm <= 0) return;
 
-    // Ruang cetak bersih per halaman A4 (297mm - 30mm margin atas & bawah = 267mm; gunakan 258mm sebagai batas aman cetak/PDF)
-    const pageInnerHeightPx = 258 * pxPerMm;
+    // Ruang cetak bersih per halaman A4 (297mm - 12mm margin atas - 10mm margin bawah = 275mm; gunakan 268mm sebagai batas aman cetak/PDF)
+    const pageInnerHeightPx = 268 * pxPerMm;
     // Ruang khusus Logo KAN di bagian bawah halaman terakhir (tinggi logo 10mm + jarak napas 4mm)
     const footerReservePx = 14 * pxPerMm;
 
