@@ -60,7 +60,7 @@ body {
 
 .kop-surat-img {
   width: 100%;
-  max-height: 3cm;
+  max-height: 3.1cm;
   object-fit: contain;
   display: block;
 }
@@ -964,7 +964,7 @@ h3 {
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); 
     border-radius: 2px;
     font-family: 'Arial', sans-serif; 
-    font-size: 11pt; 
+    font-size: 9pt; 
     color: #000; 
     box-sizing: border-box; 
     position: relative; 
@@ -1003,9 +1003,9 @@ h3 {
 .konten-utama { display: block; }
 .kop-surat-container { margin-bottom: 20px; text-align: center; }
 .kop-surat-img { width: 100%; height: auto; display: block; }
-.judul-surat { text-align: center; margin-bottom: 15px; }
-.judul-surat h1 { font-size: 14pt; margin: 0; text-decoration: underline; font-weight: normal; }
-.judul-surat p { margin: 2px 0 0 0; }
+.judul-surat { text-align: center; margin-bottom: 12px; }
+.judul-surat h1 { font-size: 11pt; margin: 0; text-decoration: underline; font-weight: normal; }
+.judul-surat p { font-size: 9pt; margin: 2px 0 0 0; }
 table.isi-surat { width: 100%; border-collapse: collapse; table-layout: fixed; }
 table.isi-surat td { padding: 2px 5px; vertical-align: top; word-wrap: break-word; }
 table.isi-surat tr.st-row-start td { padding-top: 2px; padding-bottom: 0; }
@@ -1016,7 +1016,7 @@ table.isi-surat tr.st-row-end td { padding-bottom: 2px; }
 .col-konten { width: 83%; }
 .memberi-tugas { text-align: center; margin: 10px 0; font-weight: normal; }
 .st-ttd-wrap { width: 100%; page-break-inside: avoid; break-inside: avoid; }
-.ttd-section { width: 300px; float: right; text-align: center; margin-top: 30px; page-break-inside: avoid; break-inside: avoid; }
+.ttd-section { width: 280px; float: right; text-align: center; margin-top: 22px; font-size: 9pt; page-break-inside: avoid; break-inside: avoid; }
 .ttd-section p { margin: 2px 0; line-height: 1.15; }
 .ttd-nama { margin-top: 70px; }
 
@@ -1038,7 +1038,7 @@ table.isi-surat tr.st-row-end td { padding-bottom: 2px; }
     line-height: 0;
 }
 .footer-kan img {
-    height: 1cm;
+    height: 0.8cm;
     width: auto;
     display: block !important;
     margin: 0 auto !important;
@@ -1197,7 +1197,7 @@ table.isi-surat tr.st-row-end td { padding-bottom: 2px; }
   }
 
   body.active-module-st .footer-kan img {
-    height: 1cm !important;
+    height: 0.8cm !important;
     width: auto !important;
     display: block !important;
     margin: 0 auto !important;
