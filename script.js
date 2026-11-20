@@ -780,8 +780,8 @@ window.renderPaginatedSuratTugas = function() {
     document.body.removeChild(mmRef);
     if (!pxPerMm || pxPerMm <= 0) return;
 
-    // Ruang cetak bersih per halaman A4 (297mm - 30mm margin atas & bawah = 267mm; gunakan 264mm sebagai batas aman)
-    const pageInnerHeightPx = 264 * pxPerMm;
+    // Ruang cetak bersih per halaman A4 (297mm - 30mm margin atas & bawah = 267mm; gunakan 258mm sebagai batas aman cetak/PDF)
+    const pageInnerHeightPx = 258 * pxPerMm;
     // Ruang khusus Logo KAN di bagian bawah halaman terakhir (tinggi logo 10mm + jarak napas 4mm)
     const footerReservePx = 14 * pxPerMm;
 
@@ -1023,9 +1023,20 @@ window.adjustPageHeight = function() {
 
 window.printSuratTugas = function() {
     if (window.renderPaginatedSuratTugas) window.renderPaginatedSuratTugas();
-    setTimeout(() => {
-        window.print();
-    }, 40);
+    const imgs = Array.from(document.querySelectorAll('#st-pages-container img'));
+    const waitImgs = imgs.map(img => {
+        if (img.complete && img.naturalHeight > 0) return Promise.resolve();
+        return new Promise(resolve => {
+            img.addEventListener('load', resolve, { once: true });
+            img.addEventListener('error', resolve, { once: true });
+            setTimeout(resolve, 400);
+        });
+    });
+    Promise.all(waitImgs).then(() => {
+        setTimeout(() => {
+            window.print();
+        }, 60);
+    });
 };
 
 window.updatePreview = function() {
@@ -1085,11 +1096,7 @@ function initSuratTugasModule() {
     window.addEventListener('resize', () => {
         if (window.adjustPageHeight) window.adjustPageHeight();
     });
-    window.addEventListener('beforeprint', () => {
-        if (document.body.classList.contains('active-module-st') && window.adjustPageHeight) {
-            window.adjustPageHeight();
-        }
-    });
+    // Jangan merombak ulang DOM #st-pages-container di dalam event beforeprint agar hasil cetak/PDF tidak terpotong
 
     pegawaiData = [{ nama: "", nip: "", jabatan: "" }];
     window.applyStLockState(); // Mengaktifkan gembok Surat Tugas saat pertama kali dibuka
