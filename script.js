@@ -636,43 +636,85 @@ function formatNIP(nip) {
 
 
 // ========================================================
-// 6. FUNGSI SMART SPACER (PENDORONG LOGO KAN)
+// 6. FUNGSI SMART SPACER (PENDORONG LOGO KAN KE BAWAH CENTER HALAMAN TERAKHIR)
 // ========================================================
 window.adjustPageHeight = function() {
-    const konten = document.querySelector('.konten-utama');
+    const konten = document.querySelector('#module-surat-tugas .konten-utama');
     const spacer = document.getElementById('spacer');
-    const footer = document.querySelector('.footer-kan');
+    const footer = document.querySelector('#module-surat-tugas .footer-kan');
     
-    if(!konten || !spacer || !footer) return;
+    if (!konten || !spacer || !footer) return;
+
+    // Jangan hitung saat modul Surat Tugas sedang tersembunyi (display: none)
+    const kontenRect = konten.getBoundingClientRect();
+    if (kontenRect.height <= 0) return;
     
-    // 1. Reset spacer untuk mengukur tinggi asli teks saat ini
+    // 1. Reset spacer dan aturan pemisah halaman sebelum mengukur tinggi asli
     spacer.style.height = '0px';
+    spacer.style.pageBreakBefore = 'auto';
+    spacer.style.breakBefore = 'auto';
     
-    // 2. Mencari nilai pixel yang akurat untuk 1 mm di monitor Anda
+    // 2. Ukur rasio pixel per milimeter yang akurat pada perangkat saat ini
     const mmRef = document.createElement('div');
     mmRef.style.height = '100mm';
     mmRef.style.position = 'absolute';
+    mmRef.style.visibility = 'hidden';
     document.body.appendChild(mmRef);
     const pxPerMm = mmRef.getBoundingClientRect().height / 100;
     document.body.removeChild(mmRef);
+    if (!pxPerMm || pxPerMm <= 0) return;
     
-    // 3. Menghitung Ruang Cetak Bersih (Kertas A4 297mm - Margin Atas 15mm - Margin Bawah 12mm)
-    // Sisa tinggi bersih per halaman adalah 270mm
-    const pageHeightPx = 270 * pxPerMm;
+    // 3. Ruang Cetak Bersih A4 (297mm - Margin Atas 15mm - Margin Bawah 15mm = 267mm)
+    // Gunakan 265mm (toleransi aman 2mm) agar saat cetak/PDF tidak memicu halaman kosong tambahan
+    const pageHeightPx = 265 * pxPerMm;
     
-    // 4. Ukur total tinggi teks dan logo saat ini
-    const totalNaturalHeight = konten.getBoundingClientRect().height + footer.getBoundingClientRect().height;
-    
-    // 5. Cari sisa ruang di halaman terakhir
-    const remainder = totalNaturalHeight % pageHeightPx;
-    
-    // 6. Ciptakan balok transparan sebesar sisa ruang untuk menekan logo ke batas terbawah
-    if (remainder > 0) {
-        let fillSpace = pageHeightPx - remainder;
-        // Kurangi 2px sebagai toleransi aman agar mesin print tidak panik
-        spacer.style.height = (fillSpace - 2) + 'px'; 
+    // 4. Ukur tinggi aktual konten & tinggi logo KAN (fallback 1cm = 10mm jika gambar belum selesai termuat)
+    let effectiveKontenHeight = konten.getBoundingClientRect().height;
+    const footerHeight = footer.getBoundingClientRect().height || (10 * pxPerMm);
+
+    // Deteksi jika blok tanda tangan (.ttd-section) terpotong batas halaman sehingga akan melompat utuh ke halaman berikutnya saat cetak/PDF
+    const ttdEl = konten.querySelector('.ttd-section');
+    if (ttdEl) {
+        const ttdRect = ttdEl.getBoundingClientRect();
+        const ttdTopRel = ttdRect.top - kontenRect.top;
+        const ttdBottomRel = ttdRect.bottom - kontenRect.top;
+        const startPage = Math.floor(ttdTopRel / pageHeightPx);
+        const endPage = Math.floor(Math.max(0, ttdBottomRel - 1) / pageHeightPx);
+        if (endPage > startPage) {
+            effectiveKontenHeight = Math.max(
+                effectiveKontenHeight,
+                ((startPage + 1) * pageHeightPx) + ttdRect.height
+            );
+        }
     }
-}
+    
+    // 5. Hitung jumlah halaman yang ditempati konten dan sisa ruang di halaman terakhir
+    const kontenPages = Math.max(1, Math.ceil(effectiveKontenHeight / pageHeightPx));
+    let usedOnLastPage = effectiveKontenHeight - ((kontenPages - 1) * pageHeightPx);
+    if (usedOnLastPage <= 0 && effectiveKontenHeight > 0) {
+        usedOnLastPage = pageHeightPx;
+    }
+
+    // 6. Tempatkan Logo KAN tepat di paling bawah halaman terakhir
+    if (usedOnLastPage + footerHeight <= pageHeightPx) {
+        // Logo KAN masih muat di halaman terakhir konten -> dorong ke dasar halaman tersebut
+        const fillSpace = Math.max(0, Math.floor(pageHeightPx - usedOnLastPage - footerHeight));
+        spacer.style.height = fillSpace + 'px';
+    } else {
+        // Jika sisa halaman tidak cukup untuk Logo KAN -> pindah rapi ke halaman baru & dorong ke paling bawah
+        spacer.style.pageBreakBefore = 'always';
+        spacer.style.breakBefore = 'page';
+        const fillSpace = Math.max(0, Math.floor(pageHeightPx - footerHeight));
+        spacer.style.height = fillSpace + 'px';
+    }
+};
+
+window.printSuratTugas = function() {
+    if (window.adjustPageHeight) window.adjustPageHeight();
+    setTimeout(() => {
+        window.print();
+    }, 40);
+};
 
 // ========================================================
 // 7. RENDER PREVIEW AKHIR
@@ -706,7 +748,7 @@ window.updatePreview = function() {
         pegawaiData.forEach((p, index) => {
             if(p.nama && p.nama.trim() !== "") { 
                 outPegawai.innerHTML += `
-                    <div style="display: flex; margin-bottom: 0; line-height: 1.15;">
+    <div style="display: flex; margin-bottom: 0; line-height: 1.15; page-break-inside: avoid; break-inside: avoid;">
                         <div style="width: 18px; flex-shrink: 0;">${index + 1}.</div>
                         <div style="flex-grow: 1;">
                             <div style="margin: 0;">${p.nama}</div>
@@ -765,7 +807,23 @@ function initSuratTugasModule() {
             });
         }
     });
-
+// Hitung ulang posisi Logo KAN begitu gambar Kop Surat & Logo KAN selesai dimuat, layar diubah ukurannya, atau sebelum cetak/PDF
+    document.querySelectorAll('#module-surat-tugas .kop-surat-img, #module-surat-tugas .footer-kan img').forEach(img => {
+        img.addEventListener('load', () => {
+            if (window.adjustPageHeight) window.adjustPageHeight();
+        });
+    });
+    window.addEventListener('load', () => {
+        if (window.adjustPageHeight) window.adjustPageHeight();
+    });
+    window.addEventListener('resize', () => {
+        if (window.adjustPageHeight) window.adjustPageHeight();
+    });
+    window.addEventListener('beforeprint', () => {
+        if (document.body.classList.contains('active-module-st') && window.adjustPageHeight) {
+            window.adjustPageHeight();
+        }
+    });
     pegawaiData = [{ nama: "", nip: "", jabatan: "" }];
     window.applyStLockState(); // Mengaktifkan gembok Surat Tugas saat pertama kali dibuka
     window.switchPortalModule("st"); // Pastikan pertama kali dibuka langsung tampil Aplikasi Surat Tugas
