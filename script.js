@@ -752,6 +752,16 @@ function formatNIP(nip) {
 let stLastMeasuredKopHeight = 0;
 
 window.renderPaginatedSuratTugas = function() {
+    // Bersihkan elemen pratinjau lama (.konten-utama, #spacer, .footer-kan) jika masih tertinggal di HTML luar #st-pages-container
+    const modSt = document.getElementById('module-surat-tugas');
+    if (modSt) {
+        modSt.querySelectorAll(':scope > .konten-utama, :scope > #spacer, :scope > .footer-kan, :scope > .kertas-a4').forEach(el => el.remove());
+        const prevCont = modSt.querySelector('.preview-container');
+        if (prevCont) {
+            prevCont.querySelectorAll(':scope > .kertas-a4, :scope > .konten-utama, :scope > #spacer, :scope > .footer-kan').forEach(el => el.remove());
+        }
+    }
+
     const pagesContainer = document.getElementById('st-pages-container');
     if (!pagesContainer) return;
 
