@@ -28,7 +28,8 @@ body {
    ========================================================================== */
 @page {
   /* Tanpa properti size agar menu More Settings -> Skala (Scale), Ukuran Kertas & Tata Letak selalu muncul saat Print / Save as PDF */
-  margin: 1.5cm;
+  /* Margin: Atas 1,2cm | Kanan 1,5cm | Bawah 1cm | Kiri 1,5cm */
+  margin: 1.2cm 1.5cm 1cm 1.5cm;
 }
 
 .a4-page {
@@ -958,8 +959,8 @@ h3 {
     width: 210mm; 
     height: 297mm;
     min-height: 297mm;
-    /* Simulasi Tampilan Layar: Margin seragam 1.5cm keliling sesuai @page A4 */
-    padding: 1.5cm; 
+    /* Simulasi Tampilan Layar: Atas 1.2cm, Kanan 1.5cm, Bawah 1cm, Kiri 1.5cm (Logo KAN tepat 1cm dari tepi bawah kertas) */
+    padding: 1.2cm 1.5cm 1cm 1.5cm; 
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); 
     border-radius: 2px;
     font-family: 'Arial', sans-serif; 
@@ -1025,17 +1026,19 @@ table.isi-surat tr.st-row-end td { padding-bottom: 2px; }
 .footer-kan {
     width: 100%;
     margin-top: auto !important;
+    margin-bottom: 0 !important;
     flex-shrink: 0;
     display: flex !important;
     justify-content: center !important;
-    align-items: center !important;
+    align-items: flex-end !important;
     text-align: center !important;
     page-break-inside: avoid;
     break-inside: avoid;
     padding: 0 !important;
+    line-height: 0;
 }
 .footer-kan img {
-    height: 0.8cm;
+    height: 1cm;
     width: auto;
     display: block !important;
     margin: 0 auto !important;
@@ -1158,7 +1161,8 @@ table.isi-surat tr.st-row-end td { padding-bottom: 2px; }
   body.active-module-st .kertas-a4:last-child {
     display: flex !important;
     flex-direction: column !important;
-    min-height: 260mm !important;
+    /* Area cetak bersih A4: 297mm - 12mm (atas) - 10mm (bawah) = 275mm; gunakan 274mm agar Logo KAN persis 1cm dari tepi bawah tanpa halaman kosong */
+    min-height: 274mm !important;
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
@@ -1181,10 +1185,12 @@ table.isi-surat tr.st-row-end td { padding-bottom: 2px; }
   body.active-module-st .footer-kan {
     width: 100% !important;
     margin-top: auto !important;
-    padding-top: 8px !important;
+    margin-bottom: 0 !important;
+    padding: 0 !important;
+    line-height: 0 !important;
     display: flex !important;
     justify-content: center !important;
-    align-items: center !important;
+    align-items: flex-end !important;
     text-align: center !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
