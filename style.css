@@ -60,7 +60,7 @@ body {
 
 .kop-surat-img {
   width: 100%;
-  max-height: 3.1cm;
+  max-height: 3cm;
   object-fit: contain;
   display: block;
 }
