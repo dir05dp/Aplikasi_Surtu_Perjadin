@@ -490,6 +490,7 @@ body.locked-mode .employee-dropdown-optional.empty-optional-select {
     width: 440px;
     min-width: 320px;
     max-width: 600px;
+    flex-shrink: 0;
     resize: horizontal;
     background: var(--surface-bg);
     padding: 18px 18px 28px 18px;
@@ -929,13 +930,12 @@ h3 {
    3. PRATINJAU KERTAS SURAT (TERBAGI PER HALAMAN A4)
    ======================================================= */
 .preview-container {
-    flex-grow: 1;
+    flex: 1 1 auto;
+    min-width: 0;
     padding: 32px 24px 40px 24px;
-    overflow-y: auto;
+    overflow: auto;
     background: radial-gradient(circle at top, #475569 0%, #334155 100%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    display: block;
 }
 
 .st-pages-container {
@@ -943,7 +943,8 @@ h3 {
     flex-direction: column;
     align-items: center;
     gap: 36px;
-    width: 100%;
+    width: max-content;
+    min-width: 100%;
     padding-top: 10px;
     padding-bottom: 30px;
 }
