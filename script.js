@@ -780,10 +780,13 @@ window.renderPaginatedSuratTugas = function() {
     document.body.removeChild(mmRef);
     if (!pxPerMm || pxPerMm <= 0) return;
 
-    // Ruang cetak bersih per halaman A4 (297mm - 12mm margin atas - 10mm margin bawah = 275mm; gunakan 273mm agar tidak menyia-nyiakan ruang halaman)
-    const pageInnerHeightPx = 273 * pxPerMm;
-    // Ruang khusus Logo KAN di bagian bawah halaman terakhir (tinggi logo 0,8cm = 8mm + jarak napas 2mm)
-    const footerReservePx = 10 * pxPerMm;
+    // Area cetak bersih A4 = 297mm - 12mm (atas) - 10mm (bawah) = 275mm
+    // Gunakan 266mm untuk pemisah halaman non-terakhir agar saat Print/PDF tidak meluber 1 baris ke halaman ekstra
+    const pageInnerHeightPx = 266 * pxPerMm;
+    // Target tinggi total halaman terakhir (konten + spacer + Logo KAN 8mm) = 272.5mm (2.5mm toleransi aman agar Logo KAN tepat di dasar halaman terakhir tanpa memicu halaman kosong)
+    const targetLastPageHeightMm = 272.5;
+    const logoHeightMm = 8; // 0,8 cm
+    const footerGapMm = 2;  // jarak napas minimal di atas Logo KAN
 
     pagesContainer.innerHTML = '';
     const pages = [];
@@ -985,25 +988,38 @@ window.renderPaginatedSuratTugas = function() {
     const hadContentBeforeTtd = lastPage.flowEl.children.length > 0;
     lastPage.flowEl.appendChild(ttdWrap);
 
-    // Hitung ruang maksimal aktual untuk konten + tanda tangan di atas Logo KAN (0,8cm)
-    const maxHeightWithFooterPx = Math.max(
-        pageInnerHeightPx - footerReservePx,
-        (lastPage.bodyEl.clientHeight || pageInnerHeightPx) - footerReservePx
-    );
+    // Hitung batas maksimal tinggi konten + tanda tangan di atas Logo KAN (0,8cm) pada halaman terakhir
+    const maxContentWithTtdMm = targetLastPageHeightMm - logoHeightMm - footerGapMm;
+    let flowHeightMm = lastPage.flowEl.getBoundingClientRect().height / pxPerMm;
 
-    if (hadContentBeforeTtd && (lastPage.flowEl.offsetHeight > maxHeightWithFooterPx)) {
-        // Coba rapatkan sedikit jarak atas tanda tangan terlebih dahulu agar tetap muat di halaman yang sama
+    if (hadContentBeforeTtd && flowHeightMm > maxContentWithTtdMm) {
+        // Coba rapatkan sedikit jarak tanda tangan terlebih dahulu agar tidak lompat ke halaman berikutnya jika masih muat
         const ttdSec = ttdWrap.querySelector('.ttd-section');
-        if (ttdSec) ttdSec.style.marginTop = '10px';
+        const ttdNama = ttdWrap.querySelector('.ttd-nama');
+        if (ttdSec) ttdSec.style.marginTop = '8px';
+        if (ttdNama) ttdNama.style.marginTop = '56px';
 
-        // Hanya pindahkan tanda tangan ke halaman berikutnya jika benar-benar tidak muat lagi
-        if (lastPage.flowEl.offsetHeight > maxHeightWithFooterPx) {
+        flowHeightMm = lastPage.flowEl.getBoundingClientRect().height / pxPerMm;
+
+        // Hanya pindahkan tanda tangan ke halaman baru jika benar-benar tidak muat di atas Logo KAN
+        if (flowHeightMm > maxContentWithTtdMm) {
             if (ttdSec) ttdSec.style.marginTop = '';
+            if (ttdNama) ttdNama.style.marginTop = '';
             lastPage.flowEl.removeChild(ttdWrap);
             lastPage = createPage();
             lastPage.flowEl.appendChild(ttdWrap);
+            flowHeightMm = lastPage.flowEl.getBoundingClientRect().height / pxPerMm;
         }
     }
+
+    // Tandai halaman terakhir dan tambahkan blok pendorong (spacer) dalam satuan mm
+    // agar posisi LOGO KAN saat cetak/PDF (baik 1 halaman maupun >1 halaman) selalu persis di paling bawah center halaman terakhir
+    lastPage.pageEl.classList.add('st-page-last');
+    const spacerMm = Math.max(footerGapMm, targetLastPageHeightMm - flowHeightMm - logoHeightMm);
+    const spacerEl = document.createElement('div');
+    spacerEl.className = 'st-footer-spacer';
+    spacerEl.style.height = spacerMm.toFixed(2) + 'mm';
+    lastPage.pageEl.appendChild(spacerEl);
 
     // 8. Tempatkan LOGO KAN tepat di paling bawah & center pada HALAMAN TERAKHIR
     const footerKan = document.createElement('div');
@@ -1019,7 +1035,7 @@ window.renderPaginatedSuratTugas = function() {
         this.style.padding = '10px';
     };
     footerKan.appendChild(logoImg);
-    pages[pages.length - 1].pageEl.appendChild(footerKan);
+    lastPage.pageEl.appendChild(footerKan);
 
     // 9. Tambahkan penanda nomor halaman di sudut kanan atas tiap halaman pada pratinjau layar (tidak ikut dicetak)
     const totalPages = pages.length;
@@ -1047,6 +1063,8 @@ window.printSuratTugas = function() {
         });
     });
     Promise.all(waitImgs).then(() => {
+        // Hitung ulang sekali lagi setelah seluruh gambar selesai dimuat agar tinggi spacer halaman terakhir presisi
+        if (window.renderPaginatedSuratTugas) window.renderPaginatedSuratTugas();
         setTimeout(() => {
             window.print();
         }, 60);
