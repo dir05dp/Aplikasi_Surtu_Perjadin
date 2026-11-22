@@ -964,7 +964,7 @@ h3 {
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); 
     border-radius: 2px;
     font-family: 'Arial', sans-serif; 
-    font-size: 10pt; 
+    font-size: 9pt; 
     color: #000; 
     box-sizing: border-box; 
     position: relative; 
@@ -1129,12 +1129,17 @@ table.isi-surat tr.st-row-end td { padding-bottom: 2px; }
   }
 
   body.active-module-st .st-pages-container {
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
     width: 100% !important;
     min-width: 0 !important;
+    /* Tinggi minimal 1 halaman bersih A4 agar Logo KAN tetap di bawah saat 1 halaman, tanpa memaksa halaman ke-2 saat skala diperkecil */
+    min-height: 273mm !important;
+    height: auto !important;
     gap: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
+    overflow: visible !important;
   }
 
   body.active-module-st .st-page-badge {
@@ -1154,15 +1159,16 @@ table.isi-surat tr.st-row-end td { padding-bottom: 2px; }
     overflow: visible !important;
     page-break-inside: auto !important;
     break-inside: auto !important;
-    page-break-after: always !important;
-    break-after: page !important;
+    /* Hilangkan paksaan pindah halaman agar saat zoom/skala print diperkecil, isi dapat menyatu menjadi 1 halaman */
+    page-break-after: auto !important;
+    break-after: auto !important;
   }
 
   body.active-module-st .kertas-a4:last-child {
+    flex: 1 0 auto !important;
     display: flex !important;
     flex-direction: column !important;
-    /* Area cetak bersih A4: 297mm - 12mm (atas) - 10mm (bawah) = 275mm; gunakan 274mm agar Logo KAN persis 1cm dari tepi bawah tanpa halaman kosong */
-    min-height: 274mm !important;
+    min-height: 0 !important;
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
